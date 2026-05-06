@@ -64,6 +64,36 @@
             });
         }
     });
+
+    var tamuValVilla = parseInt(document.getElementById('inputTamuVilla').value) || 1;
+    var kamarValVilla = parseInt(document.getElementById('inputKamarVilla').value) || 1;
+
+    function toggleGuestPickerVilla() {
+        var picker = document.getElementById('guestPickerVilla');
+        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function changeCountVilla(type, delta) {
+        if (type === 'tamu') {
+            tamuValVilla = Math.max(1, tamuValVilla + delta);
+            document.getElementById('tamuCountVilla').textContent = tamuValVilla;
+            document.getElementById('inputTamuVilla').value = tamuValVilla;
+        } else {
+            kamarValVilla = Math.max(1, kamarValVilla + delta);
+            document.getElementById('kamarCountVilla').textContent = kamarValVilla;
+            document.getElementById('inputKamarVilla').value = kamarValVilla;
+        }
+        document.getElementById('guestLabelVilla').textContent =
+            tamuValVilla + ' Tamu, ' + kamarValVilla + ' Kamar';
+    }
+
+    document.addEventListener('click', function(e) {
+        var picker = document.getElementById('guestPickerVilla');
+        var wrapper = picker?.closest('.position-relative');
+        if (picker && !wrapper?.contains(e.target)) {
+            picker.style.display = 'none';
+        }
+    });
 </script>
 @endpush
 
@@ -109,44 +139,90 @@
     <div class="container">
         <form action="{{ route('villa.index') }}" method="GET">
             <div class="row g-2">
-                <div class="col-md-10">
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <input type="text" name="kota" class="form-control border-0 py-3"
-                                placeholder="Cari kota atau nama villa..."
-                                value="{{ request('kota') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="date" name="checkin" class="form-control border-0 py-3"
-                                value="{{ request('checkin') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <select name="tamu" class="form-select border-0 py-3">
-                                <option value="">Jumlah Tamu</option>
-                                @for($i = 1; $i <= 20; $i++)
-                                    <option value="{{ $i }}" {{ request('tamu') == $i ? 'selected' : '' }}>
-                                    {{ $i }} Tamu
-                                    </option>
-                                    @endfor
-                            </select>
+
+                {{-- Lokasi --}}
+                <div class="col-md-3">
+                    <input type="text" name="kota" class="form-control border-0 py-3"
+                        placeholder="Cari kota atau nama villa..."
+                        value="{{ request('kota') }}">
+                </div>
+
+                {{-- Check-in --}}
+                <div class="col-md-3">
+                    <input type="date" name="checkin" class="form-control border-0 py-3"
+                        value="{{ request('checkin') }}">
+                </div>
+
+                {{-- Check-out --}}
+                <div class="col-md-2">
+                    <input type="date" name="checkout" class="form-control border-0 py-3"
+                        value="{{ request('checkout') }}">
+                </div>
+
+                {{-- Tamu & Kamar (gabungan) --}}
+                <div class="col-md-2 position-relative">
+                    <div class="bg-white rounded px-3 py-2 h-100"
+                        style="cursor:pointer; min-height:48px;"
+                        onclick="toggleGuestPickerVilla()">
+                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Tamu & Kamar</small>
+                        <div class="fw-semibold" id="guestLabelVilla" style="font-size:14px;">
+                            {{ request('tamu', 1) }} Tamu, {{ request('kamar', 1) }} Kamar
                         </div>
                     </div>
+
+                    <input type="hidden" name="tamu" id="inputTamuVilla" value="{{ request('tamu', 1) }}">
+                    <input type="hidden" name="kamar" id="inputKamarVilla" value="{{ request('kamar', 1) }}">
+
+                    {{-- Dropdown Picker --}}
+                    <div id="guestPickerVilla" class="bg-white rounded shadow p-3 position-absolute"
+                        style="display:none; top:110%; left:0; width:260px; z-index:999; border:1px solid #eee;">
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <div class="fw-semibold" style="font-size:14px;">Tamu</div>
+                                <!-- <small class="text-muted">Dewasa</small> -->
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
+                                    style="width:30px;height:30px;padding:0;"
+                                    onclick="changeCountVilla('tamu', -1)">−</button>
+                                <span id="tamuCountVilla" class="fw-bold">{{ request('tamu', 1) }}</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
+                                    style="width:30px;height:30px;padding:0;"
+                                    onclick="changeCountVilla('tamu', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <div class="fw-semibold" style="font-size:14px;">Kamar</div>
+                                <small class="text-muted">Jumlah kamar</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
+                                    style="width:30px;height:30px;padding:0;"
+                                    onclick="changeCountVilla('kamar', -1)">−</button>
+                                <span id="kamarCountVilla" class="fw-bold">{{ request('kamar', 1) }}</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
+                                    style="width:30px;height:30px;padding:0;"
+                                    onclick="changeCountVilla('kamar', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-sm w-100"
+                            onclick="toggleGuestPickerVilla()">
+                            Selesai
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
+
+                {{-- Tombol Cari --}}
+                <div class="col-md-2 d-flex align-items-center">
                     <button type="submit" class="btn btn-dark border-0 w-100 py-3">
                         <i class="fa fa-search me-2"></i> Cari
                     </button>
                 </div>
-                <div class="col-md-3">
-                    <select name="kamar" class="form-select border-0 py-3">
-                        <option value="">Jumlah Kamar</option>
-                        @for($i = 1; $i <= 10; $i++)
-                            <option value="{{ $i }}" {{ request('kamar') == $i ? 'selected' : '' }}>
-                            {{ $i }} Kamar
-                            </option>
-                            @endfor
-                    </select>
-                </div>
+
             </div>
         </form>
     </div>
@@ -212,22 +288,6 @@
                             <button type="submit" class="btn btn-primary btn-sm w-100">
                                 Terapkan Harga
                             </button>
-                        </div>
-
-                        {{-- Kapasitas Tamu --}}
-                        <div class="mb-4 pb-4 border-bottom">
-                            <h6 class="fw-semibold mb-3">Kapasitas Tamu</h6>
-                            @foreach([2 => '2+ Tamu', 4 => '4+ Tamu', 6 => '6+ Tamu', 10 => '10+ Tamu', 15 => '15+ Tamu'] as $val => $label)
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio"
-                                    name="tamu" id="tamu{{ $val }}" value="{{ $val }}"
-                                    {{ request('tamu') == $val ? 'checked' : '' }}
-                                    onchange="this.form.submit()">
-                                <label class="form-check-label" for="tamu{{ $val }}">
-                                    {{ $label }}
-                                </label>
-                            </div>
-                            @endforeach
                         </div>
 
                         {{-- Rating --}}

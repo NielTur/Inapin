@@ -65,16 +65,8 @@
         }
     });
 
-    var tamuVal = {
-        {
-            request('tamu', 1)
-        }
-    };
-    var kamarVal = {
-        {
-            request('kamar', 1)
-        }
-    };
+    var tamuValVilla = parseInt(document.getElementById('inputTamuVilla').value) || 1;
+    var kamarValVilla = parseInt(document.getElementById('inputKamarVilla').value) || 1;
 
     function toggleGuestPicker() {
         var picker = document.getElementById('guestPicker');
@@ -201,7 +193,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <div class="fw-semibold" style="font-size:14px;">Tamu</div>
-                                <small class="text-muted">Dewasa</small>
+                                <!-- <small class="text-muted">Dewasa</small> -->
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
