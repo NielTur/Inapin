@@ -108,7 +108,7 @@
                     <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">VillaKu</h5>
                         <p>Platform terpercaya untuk menemukan dan memesan villa impian di seluruh Indonesia.</p>
-                        <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Jakarta, Indonesia</p>
+                        <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Stockholm, Swedia</p>
                         <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+62 812 3456 7890</p>
                         <p class="mb-2"><i class="fa fa-envelope me-3"></i>halo@villaku.id</p>
                         <div class="d-flex pt-2">

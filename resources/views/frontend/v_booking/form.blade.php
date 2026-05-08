@@ -88,7 +88,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-6">
+                            <!-- <div class="col-md-6">
                                 <label class="form-label fw-semibold">Jumlah Tamu</label>
                                 <select class="form-select">
                                     @for($i = 1; $i <= $villa->kapasitas; $i++)
@@ -97,7 +97,7 @@
                                         </option>
                                         @endfor
                                 </select>
-                            </div>
+                            </div> -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Jumlah Malam</label>
                                 <input type="text" class="form-control bg-white fw-bold text-primary"

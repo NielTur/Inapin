@@ -378,6 +378,12 @@
                         <p class="text-muted mb-3">
                             <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
                         </p>
+                        {{-- Tambah ini --}}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($villa->alamat . ', ' . $villa->kota) }}"
+                            target="_blank"
+                            class="btn btn-outline-primary btn-sm mb-3">
+                            <i class="fa fa-external-link-alt me-2"></i> Buka di Google Maps
+                        </a>
                         <div id="peta-villa"></div>
                     </div>
 
@@ -393,6 +399,8 @@
                         </h3>
                         <span class="text-muted">per malam</span>
                     </div>
+
+                    <input type="hidden" id="hargaVilla" value="{{ (int) $villa->harga }}">
 
                     @if($villa->ulasan)
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -489,8 +497,11 @@
 </script>
 @endpush
 
-@push('scripts')
+@push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
+
+@push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -502,8 +513,6 @@
             .addTo(map)
             .bindPopup('<b>{{ addslashes($villa->nama_villa) }}</b><br>{{ addslashes($villa->alamat) }}')
             .openPopup();
-
-        // Fix peta gak kerender sempurna
         setTimeout(function() {
             map.invalidateSize();
         }, 300);
@@ -518,11 +527,7 @@
     function hitungTotal() {
         var checkin = document.querySelector('input[name="checkin"]').value;
         var checkout = document.querySelector('input[name="checkout"]').value;
-        var harga = {
-            {
-                (int) $villa - > harga
-            }
-        };
+        var harga = parseInt(document.getElementById('hargaVilla').value);
         if (checkin && checkout) {
             var malam = Math.floor((new Date(checkout) - new Date(checkin)) / 86400000);
             if (malam > 0) {

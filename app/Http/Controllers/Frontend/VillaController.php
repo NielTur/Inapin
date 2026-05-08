@@ -12,7 +12,7 @@ class VillaController extends Controller
     public function index(Request $request): View
     {
         $query = Villa::where('status', 'aktif')
-            ->with(['fasilitasVilla', 'dokumenVilla']);
+            ->with(['fasilitasVilla', 'dokumenVilla', 'owner']);
 
         // Filter: Keyword / Nama Villa
         if ($request->filled('kota')) {
