@@ -126,43 +126,32 @@
                         <a class="btn btn-link text-white-50" href="#">Syarat & Ketentuan</a>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <h5 class="text-white mb-4">Galeri Villa</h5>
-                        <div class="row g-2 pt-2">
-                            @for($i = 1; $i <= 6; $i++)
-                                <div class="col-4">
-                                <img class="img-fluid rounded bg-light p-1"
-                                    src="{{ asset('frontend/img/property-' . $i . '.jpg') }}" alt="">
-                        </div>
-                        @endfor
+                        <h5 class="text-white mb-4">Daftarkan Villa Anda</h5>
+                        <p>Punya villa? Bergabunglah sebagai mitra owner dan mulai terima pemesanan sekarang.</p>
+                        <a href={{ route('owner.register') }} class="btn btn-primary py-2 px-4">Jadi Mitra Owner</a>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <h5 class="text-white mb-4">Daftarkan Villa Anda</h5>
-                    <p>Punya villa? Bergabunglah sebagai mitra owner dan mulai terima pemesanan sekarang.</p>
-                    <a href="#" class="btn btn-primary py-2 px-4">Jadi Mitra Owner</a>
                 </div>
             </div>
-        </div>
-        <div class="container">
-            <div class="copyright">
-                <div class="row">
-                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        &copy; {{ date('Y') }} <a class="border-bottom" href="{{ route('beranda') }}">VillaKu</a>. Hak Cipta Dilindungi.
-                    </div>
-                    <div class="col-md-6 text-center text-md-end">
-                        <div class="footer-menu">
-                            <a href="{{ route('beranda') }}">Beranda</a>
-                            <a href="#">Bantuan</a>
-                            <a href="#">FAQ</a>
+            <div class="container">
+                <div class="copyright">
+                    <div class="row">
+                        <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                            &copy; {{ date('Y') }} <a class="border-bottom" href="{{ route('beranda') }}">VillaKu</a>. Hak Cipta Dilindungi.
+                        </div>
+                        <div class="col-md-6 text-center text-md-end">
+                            <div class="footer-menu">
+                                <a href="{{ route('beranda') }}">Beranda</a>
+                                <a href="#">Bantuan</a>
+                                <a href="#">FAQ</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- Back to Top --}}
-    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+        {{-- Back to Top --}}
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
 
     </div>
 
