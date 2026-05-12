@@ -19,6 +19,12 @@ return [
             'driver'   => 'session',
             'provider' => 'owners',
         ],
+
+        // Guard untuk Admin
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admin',
+        ],
     ],
 
     'providers' => [
@@ -32,6 +38,12 @@ return [
         'owners' => [
             'driver' => 'eloquent',
             'model'  => App\Models\Owner::class,
+        ],
+
+        // Provider Admin
+        'admin' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\Admin::class,
         ],
     ],
 
