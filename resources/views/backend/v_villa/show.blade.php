@@ -130,8 +130,14 @@
                             <label class="form-label small fw-semibold">
                                 Alasan Penolakan <span class="text-danger">*</span>
                             </label>
-                            <textarea name="catatan_admin" class="form-control" rows="3"
-                                placeholder="Tulis alasan penolakan..."></textarea>
+                            <textarea name="catatan_admin"
+                                class="form-control @error('catatan_admin') is-invalid @enderror"
+                                rows="3"
+                                placeholder="Tulis alasan penolakan..."
+                                required>{{ old('catatan_admin') }}</textarea>
+                            @error('catatan_admin')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <button type="submit" class="btn btn-danger w-100">
                             <i class="fa fa-times me-1"></i> Tolak Villa

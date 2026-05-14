@@ -14,6 +14,9 @@ return new class extends Migration {
             $table->string('nama_villa');
             $table->text('deskripsi')->nullable();
             $table->string('kota');
+            $table->string('kelurahan')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('provinsi')->nullable();
             $table->decimal('harga', 15, 2);
             $table->integer('kapasitas');
             $table->integer('jumlah_kamar')->default(1);
@@ -37,7 +40,6 @@ return new class extends Migration {
             $table->text('komentar')->nullable();
             $table->timestamps();
 
-            // 1 tamu = 1 rating per villa
             $table->unique(['id_villa', 'id_customer']);
 
             $table->foreign('id_villa')

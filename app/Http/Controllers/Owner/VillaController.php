@@ -34,30 +34,37 @@ class VillaController extends Controller
         $request->validate([
             'nama_villa' => 'required|string|max:100',
             'deskripsi' => 'required|string',
-            'kota' => 'required|string|max:50',
+            'kota' => 'required|string|max:100',
+            'kelurahan' => 'nullable|string|max:100',
+            'kecamatan' => 'nullable|string|max:100',
+            'provinsi' => 'nullable|string|max:100',
             'alamat' => 'required|string',
             'harga' => 'required|numeric|min:0',
             'kapasitas' => 'required|integer|min:1',
+            'jumlah_kamar' => 'required|integer|min:1',
+            'jumlah_kamar_mandi' => 'required|integer|min:1',
             'fasilitas' => 'nullable|array',
             'fasilitas.*' => 'string|max:100',
             'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             'nama_villa.required' => 'Nama villa wajib diisi.',
             'deskripsi.required' => 'Deskripsi wajib diisi.',
-            'kota.required' => 'Kota wajib diisi.',
-            'alamat.required' => 'Alamat wajib diisi.',
+            'kota.required' => 'Kota/Kabupaten wajib diisi.',
+            'alamat.required' => 'Alamat lengkap wajib diisi.',
             'harga.required' => 'Harga wajib diisi.',
             'kapasitas.required' => 'Kapasitas wajib diisi.',
             'foto.*.image' => 'File harus berupa gambar.',
             'foto.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        // Simpan villa — status default pending, menunggu persetujuan admin
         $villa = Villa::create([
             'id_owner' => Auth::id(),
             'nama_villa' => $request->nama_villa,
             'deskripsi' => $request->deskripsi,
             'kota' => $request->kota,
+            'kelurahan' => $request->kelurahan,
+            'kecamatan' => $request->kecamatan,
+            'provinsi' => $request->provinsi,
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -70,7 +77,6 @@ class VillaController extends Controller
             'status' => 'pending',
         ]);
 
-        // Simpan fasilitas
         if ($request->filled('fasilitas')) {
             foreach ($request->fasilitas as $fas) {
                 if (trim($fas)) {
@@ -82,7 +88,6 @@ class VillaController extends Controller
             }
         }
 
-        // Upload foto
         if ($request->hasFile('foto')) {
             foreach ($request->file('foto') as $file) {
                 $path = $file->store('foto_villa', 'public');
@@ -118,10 +123,15 @@ class VillaController extends Controller
         $request->validate([
             'nama_villa' => 'required|string|max:100',
             'deskripsi' => 'required|string',
-            'kota' => 'required|string|max:50',
+            'kota' => 'required|string|max:100',
+            'kelurahan' => 'nullable|string|max:100',
+            'kecamatan' => 'nullable|string|max:100',
+            'provinsi' => 'nullable|string|max:100',
             'alamat' => 'required|string',
             'harga' => 'required|numeric|min:0',
             'kapasitas' => 'required|integer|min:1',
+            'jumlah_kamar' => 'required|integer|min:1',
+            'jumlah_kamar_mandi' => 'required|integer|min:1',
             'status' => 'required|in:pending,disetujui,ditolak,nonaktif',
             'fasilitas' => 'nullable|array',
             'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -131,6 +141,9 @@ class VillaController extends Controller
             'nama_villa' => $request->nama_villa,
             'deskripsi' => $request->deskripsi,
             'kota' => $request->kota,
+            'kelurahan' => $request->kelurahan,
+            'kecamatan' => $request->kecamatan,
+            'provinsi' => $request->provinsi,
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -143,7 +156,6 @@ class VillaController extends Controller
             'status' => $request->status,
         ]);
 
-        // Update fasilitas — hapus lama, insert baru
         $villa->fasilitasVilla()->delete();
         if ($request->filled('fasilitas')) {
             foreach ($request->fasilitas as $fas) {
@@ -156,7 +168,6 @@ class VillaController extends Controller
             }
         }
 
-        // Upload foto baru
         if ($request->hasFile('foto')) {
             foreach ($request->file('foto') as $file) {
                 $path = $file->store('foto_villa', 'public');
@@ -179,7 +190,6 @@ class VillaController extends Controller
             ->where('id_owner', Auth::id())
             ->firstOrFail();
 
-        // Hapus foto dari storage
         foreach ($villa->dokumenVilla as $dok) {
             Storage::disk('public')->delete($dok->file_path);
         }

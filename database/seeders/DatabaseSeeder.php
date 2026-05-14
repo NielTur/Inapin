@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([VillaSeeder::class]);
 
-        // Admin default
+        // Admin
         DB::table('admin')->insert([
             'nama' => 'Super Admin',
             'email' => 'admin@inapin.com',

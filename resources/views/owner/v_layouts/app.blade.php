@@ -13,7 +13,8 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Inter:wght@700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
@@ -151,31 +152,28 @@
         {{-- Navigation --}}
         <nav class="py-2">
             <span class="nav-section">Menu Utama</span>
-
             <a href="{{ route('owner.dashboard') }}"
                 class="nav-link {{ request()->routeIs('owner.dashboard') ? 'active' : '' }}">
                 <i class="fa fa-tachometer-alt"></i> Dashboard
             </a>
 
             <span class="nav-section">Properti</span>
-
             <a href="{{ route('owner.villa.index') }}"
                 class="nav-link {{ request()->routeIs('owner.villa.*') ? 'active' : '' }}">
                 <i class="fa fa-home"></i> Villa Saya
             </a>
 
             <span class="nav-section">Transaksi</span>
-
             <a href="{{ route('owner.pesanan.index') }}"
                 class="nav-link {{ request()->routeIs('owner.pesanan.*') ? 'active' : '' }}">
                 <i class="fa fa-clipboard-list"></i> Pesanan Masuk
                 @php
-                $pesananBaru = \App\Models\Pemesanan::whereHas('villa', function($q) {
-                $q->where('id_owner', auth()->id());
-                })->where('status', 'menunggu')->count();
+                    $pesananBaru = \App\Models\Pemesanan::whereHas('villa', function ($q) {
+                        $q->where('id_owner', auth()->id());
+                    })->where('status', 'menunggu')->count();
                 @endphp
                 @if($pesananBaru > 0)
-                <span class="badge bg-danger ms-auto">{{ $pesananBaru }}</span>
+                    <span class="badge bg-danger ms-auto">{{ $pesananBaru }}</span>
                 @endif
             </a>
 
@@ -217,9 +215,9 @@
 
         {{-- Flash Messages --}}
         @if(session('success') || session('error') || session('warning'))
-        <div class="px-4 pt-3">
-            @include('frontend.v_components.alert')
-        </div>
+            <div class="px-4 pt-3">
+                @include('frontend.v_components.alert')
+            </div>
         @endif
 
         {{-- Konten Halaman --}}

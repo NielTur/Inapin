@@ -442,90 +442,95 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // ===== PETA LEAFLET =====
-    document.addEventListener('DOMContentLoaded', function() {
-        var namaVilla = document.getElementById('namaVilla').value;
-        var alamatVilla = document.getElementById('alamatVilla').value;
-        var kotaVilla = "{{ $villa->kota }}"; // ← tambah kota biar akurat
+    document.addEventListener('DOMContentLoaded', function () {
+    var namaVilla   = document.getElementById('namaVilla').value;
+    var alamatVilla = document.getElementById('alamatVilla').value;
+    var kotaVilla   = "{{ $villa->kota }}";
+    var popupText   = '<b>' + namaVilla + '</b><br><small>' + alamatVilla + '</small>';
 
-        // Init map tanpa set view dulu — biar gak keliatan Jakarta
-        var map = L.map('peta-villa');
-        var marker = null;
+    var map = L.map('peta-villa').setView([-6.2088, 106.8456], 5);
+    var marker = null;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+    }).addTo(map);
 
-        // Query: alamat + kota = lebih akurat
-        var query = encodeURIComponent(alamatVilla + ', ' + kotaVilla + ', Indonesia');
+    // Loading overlay
+    var petaEl = document.getElementById('peta-villa');
+    petaEl.style.position = 'relative';
+    var loadingDiv = document.createElement('div');
+    loadingDiv.id = 'peta-loading';
+    loadingDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.75);display:flex;align-items:center;justify-content:center;z-index:999;border-radius:8px;';
+    loadingDiv.innerHTML = '<div style="text-align:center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 small text-muted mb-0">Memuat lokasi...</p></div>';
+    petaEl.appendChild(loadingDiv);
 
-        // Step 1: Cari bounding box kota dulu
-        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
-                encodeURIComponent(kotaVilla + ', Indonesia') +
-                '&limit=1&countrycodes=id')
-            .then(function(res) {
-                return res.json();
-            })
-            .then(function(kotaData) {
-                if (!kotaData || kotaData.length === 0) throw new Error('Kota tidak ditemukan');
+    function removeLoading() {
+        var el = document.getElementById('peta-loading');
+        if (el) el.remove();
+    }
 
-                var bb = kotaData[0].boundingbox;
-                // boundingbox = [minlat, maxlat, minlon, maxlon]
-                var viewbox = bb[2] + ',' + bb[1] + ',' + bb[3] + ',' + bb[0];
+    function setMarker(lat, lng, zoom) {
+        map.setView([lat, lng], zoom);
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup(popupText)
+            .openPopup();
+        setTimeout(function () { map.invalidateSize(); }, 300);
+        removeLoading();
+    }
 
-                // Step 2: Cari alamat DIBATASI dalam area kota
-                return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
-                    encodeURIComponent(alamatVilla) +
-                    '&limit=1&countrycodes=id' +
-                    '&viewbox=' + viewbox +
-                    '&bounded=1');
-            })
-            .then(function(res) {
-                return res.json();
-            })
+    // ─── GANTI BAGIAN INI (hapus queries lama, paste yang baru) ───
+    var kelurahan = "{{ $villa->kelurahan ?? '' }}";
+    var kecamatan = "{{ $villa->kecamatan ?? '' }}";
+    var provinsi  = "{{ $villa->provinsi ?? '' }}";
+
+    var queries = [];
+
+    var q1parts = [alamatVilla, kelurahan, kecamatan, kotaVilla, provinsi, 'Indonesia']
+        .filter(function(s) { return s.trim() !== ''; });
+    queries.push({ q: q1parts.join(', '), zoom: 17 });
+
+    var q2parts = [kecamatan, kotaVilla, provinsi, 'Indonesia']
+        .filter(function(s) { return s.trim() !== ''; });
+    if (q2parts.length > 2) queries.push({ q: q2parts.join(', '), zoom: 14 });
+
+    var q3parts = [kotaVilla, provinsi, 'Indonesia']
+        .filter(function(s) { return s.trim() !== ''; });
+    queries.push({ q: q3parts.join(', '), zoom: 12 });
+
+    function nominatim(query) {
+        return fetch(
+            'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=' +
+            encodeURIComponent(query),
+            { headers: { 'Accept-Language': 'id,en' } }
+        ).then(function(r) { return r.json(); });
+    }
+
+    function tryNext(index) {
+        if (index >= queries.length) {
+            setMarker(-6.2088, 106.8456, 10);
+            return;
+        }
+        nominatim(queries[index].q)
             .then(function(data) {
-                var lat, lng;
                 if (data && data.length > 0) {
-                    lat = parseFloat(data[0].lat);
-                    lng = parseFloat(data[0].lon);
+                    setMarker(parseFloat(data[0].lat), parseFloat(data[0].lon), queries[index].zoom);
                 } else {
-                    // Fallback: pakai koordinat pusat kota aja
-                    return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
-                            encodeURIComponent(kotaVilla + ', Indonesia') +
-                            '&limit=1&countrycodes=id')
-                        .then(function(res) {
-                            return res.json();
-                        })
-                        .then(function(d) {
-                            lat = d && d.length > 0 ? parseFloat(d[0].lat) : -6.2088;
-                            lng = d && d.length > 0 ? parseFloat(d[0].lon) : 106.8456;
-                            map.setView([lat, lng], 13);
-                            marker = L.marker([lat, lng]).addTo(map)
-                                .bindPopup('<b>' + namaVilla + '</b><br>' + alamatVilla)
-                                .openPopup();
-                            setTimeout(function() {
-                                map.invalidateSize();
-                            }, 300);
-                        });
+                    tryNext(index + 1);
                 }
-                map.setView([lat, lng], 15);
-                marker = L.marker([lat, lng]).addTo(map)
-                    .bindPopup('<b>' + namaVilla + '</b><br>' + alamatVilla)
-                    .openPopup();
-                setTimeout(function() {
-                    map.invalidateSize();
-                }, 300);
             })
-            .catch(function() {
-                map.setView([-6.2088, 106.8456], 13);
-                L.marker([-6.2088, 106.8456]).addTo(map)
-                    .bindPopup('<b>' + namaVilla + '</b>').openPopup();
-            });
-    });
+            .catch(function() { tryNext(index + 1); });
+    }
+
+    tryNext(0);
+
+});
 
     // ===== FOTO VILLA =====
     function gantifoto(el, src) {
         document.getElementById('fotoUtama').src = src;
-        document.querySelectorAll('.foto-thumb').forEach(function(t) {
+        document.querySelectorAll('.foto-thumb').forEach(function (t) {
             t.classList.remove('active');
         });
         el.classList.add('active');
@@ -533,9 +538,9 @@
 
     // ===== HITUNG TOTAL =====
     function hitungTotal() {
-        var checkin = document.querySelector('input[name="checkin"]').value;
+        var checkin  = document.querySelector('input[name="checkin"]').value;
         var checkout = document.querySelector('input[name="checkout"]').value;
-        var harga = parseInt(document.getElementById('hargaVilla').value);
+        var harga    = parseInt(document.getElementById('hargaVilla').value);
         if (checkin && checkout) {
             var malam = Math.floor((new Date(checkout) - new Date(checkin)) / 86400000);
             if (malam > 0) {
@@ -551,13 +556,13 @@
     var selectedRating = parseInt(document.getElementById('selectedRatingVal')?.value || '0');
 
     function hoverStar(n) {
-        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
+        document.querySelectorAll('#starContainer label').forEach(function (s, i) {
             s.style.color = i < n ? '#ffc107' : '#dee2e6';
         });
     }
 
     function resetStar() {
-        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
+        document.querySelectorAll('#starContainer label').forEach(function (s, i) {
             s.style.color = i < selectedRating ? '#ffc107' : '#dee2e6';
         });
     }

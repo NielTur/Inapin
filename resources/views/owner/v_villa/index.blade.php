@@ -52,8 +52,12 @@
                     </td>
                     <td>{{ $villa->kapasitas }} tamu</td>
                     <td>
-                        @if($villa->status === 'aktif')
+                        @if($villa->status === 'disetujui')
                         <span class="badge bg-success px-2 py-1">Aktif</span>
+                        @elseif($villa->status === 'pending')
+                        <span class="badge bg-warning text-dark px-2 py-1">Menunggu</span>
+                        @elseif($villa->status === 'ditolak')
+                        <span class="badge bg-danger px-2 py-1">Ditolak</span>
                         @else
                         <span class="badge bg-secondary px-2 py-1">Nonaktif</span>
                         @endif
