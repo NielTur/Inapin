@@ -12,9 +12,9 @@ class VillaController extends Controller
     public function index(Request $request): View
     {
         $query = Villa::where('status', 'disetujui')
+            ->where('tersedia', true)
             ->with(['fasilitasVilla', 'dokumenVilla', 'owner']);
 
-        // Filter: Keyword / Nama Villa
         if ($request->filled('kota')) {
             $query->where(function ($q) use ($request) {
                 $q->where('kota', 'like', '%' . $request->kota . '%')
@@ -23,32 +23,26 @@ class VillaController extends Controller
             });
         }
 
-        // Filter: Harga Min
         if ($request->filled('harga_min')) {
             $query->where('harga', '>=', $request->harga_min);
         }
 
-        // Filter: Harga Max
         if ($request->filled('harga_max')) {
             $query->where('harga', '<=', $request->harga_max);
         }
 
-        // Filter: Kapasitas Tamu
         if ($request->filled('tamu')) {
             $query->where('kapasitas', '>=', $request->tamu);
         }
 
-        // Filter: Rating
         if ($request->filled('rating')) {
             $query->where('ulasan', '>=', $request->rating);
         }
 
-        // Filter: Jumlah Kamar
         if ($request->filled('kamar')) {
             $query->where('jumlah_kamar', '>=', $request->kamar);
         }
 
-        // Sorting
         $sort = $request->get('sort', 'terbaru');
         match ($sort) {
             'harga_asc' => $query->orderBy('harga', 'asc'),
@@ -59,17 +53,17 @@ class VillaController extends Controller
 
         $villas = $query->paginate(9)->withQueryString();
 
-        // Data untuk filter sidebar
         $kotaList = Villa::where('status', 'disetujui')
+            ->where('tersedia', true)
             ->selectRaw('kota, COUNT(*) as total')
             ->groupBy('kota')
             ->orderByDesc('total')
             ->pluck('kota')
             ->take(5);
 
-        $hargaMin = Villa::where('status', 'disetujui')->min('harga') ?? 0;
-        $hargaMax = Villa::where('status', 'disetujui')->max('harga') ?? 10000000;
-        $totalVilla = Villa::where('status', 'disetujui')->count();
+        $hargaMin = Villa::where('status', 'disetujui')->where('tersedia', true)->min('harga') ?? 0;
+        $hargaMax = Villa::where('status', 'disetujui')->where('tersedia', true)->max('harga') ?? 10000000;
+        $totalVilla = Villa::where('status', 'disetujui')->where('tersedia', true)->count();
 
         return view('frontend.v_villa.index', compact(
             'villas',

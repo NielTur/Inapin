@@ -14,8 +14,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_customer');
             $table->string('metode_pembayaran');
             $table->datetime('tanggal_pemesanan');
-            $table->enum('status', ['menunggu', 'dikonfirmasi', 'ditolak', 'selesai'])
+            $table->enum('status', ['menunggu', 'dibayar', 'checked_in', 'checked_out', 'dibatalkan'])
                 ->default('menunggu');
+            $table->datetime('expires_at')->nullable();
             $table->timestamps();
 
             $table->foreign('id_villa')

@@ -14,25 +14,24 @@ class DashboardController extends Controller
     {
         $idOwner = Auth::id();
 
-        // Statistik villa
-        $totalVilla  = Villa::where('id_owner', $idOwner)->count();
-        $villaAktif  = Villa::where('id_owner', $idOwner)->where('status', 'aktif')->count();
+        $totalVilla = Villa::where('id_owner', $idOwner)->count();
+        $villaAktif = Villa::where('id_owner', $idOwner)->where('status', 'disetujui')->count();
 
-        // Statistik pesanan
-        $totalPesanan     = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))->count();
-        $pesananMenunggu  = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
+        $totalPesanan = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))->count();
+        $pesananMenunggu = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
             ->where('status', 'menunggu')->count();
-        $pesananKonfirmasi = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
-            ->where('status', 'dikonfirmasi')->count();
 
-        // Total pendapatan (dari pesanan yang dikonfirmasi)
+        // Aktif = sudah bayar atau sedang menginap
+        $pesananAktif = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
+            ->whereIn('status', ['dibayar', 'checked_in'])->count();
+
+        // Pendapatan dari semua yang sudah/pernah bayar
         $totalPendapatan = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
-            ->where('status', 'dikonfirmasi')
+            ->whereIn('status', ['dibayar', 'checked_in', 'checked_out'])
             ->with('detailPemesanan')
             ->get()
             ->sum(fn($p) => $p->detailPemesanan?->sub_total ?? 0);
 
-        // 5 pesanan terbaru
         $pesananTerbaru = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', $idOwner))
             ->with(['villa', 'customer', 'detailPemesanan'])
             ->latest()
@@ -44,7 +43,7 @@ class DashboardController extends Controller
             'villaAktif',
             'totalPesanan',
             'pesananMenunggu',
-            'pesananKonfirmasi',
+            'pesananAktif',
             'totalPendapatan',
             'pesananTerbaru'
         ));

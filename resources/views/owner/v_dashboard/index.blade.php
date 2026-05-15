@@ -14,7 +14,7 @@
                     <div>
                         <p class="text-muted small mb-1">Total Villa</p>
                         <h3 class="fw-bold mb-0">{{ $totalVilla }}</h3>
-                        <small class="text-success">{{ $villaAktif }} aktif</small>
+                        <small class="text-success">{{ $villaAktif }} disetujui</small>
                     </div>
                     <div class="bg-primary bg-opacity-10 rounded p-3">
                         <i class="fa fa-home fa-lg text-primary"></i>
@@ -27,9 +27,9 @@
             <div class="bg-white rounded p-4 h-100 border-start border-warning border-4">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <p class="text-muted small mb-1">Menunggu Konfirmasi</p>
+                        <p class="text-muted small mb-1">Menunggu Bayar</p>
                         <h3 class="fw-bold mb-0">{{ $pesananMenunggu }}</h3>
-                        <small class="text-warning">Perlu ditindaklanjuti</small>
+                        <small class="text-warning">Belum bayar</small>
                     </div>
                     <div class="bg-warning bg-opacity-10 rounded p-3">
                         <i class="fa fa-clock fa-lg text-warning"></i>
@@ -42,9 +42,9 @@
             <div class="bg-white rounded p-4 h-100 border-start border-success border-4">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <p class="text-muted small mb-1">Total Pesanan</p>
-                        <h3 class="fw-bold mb-0">{{ $totalPesanan }}</h3>
-                        <small class="text-success">{{ $pesananKonfirmasi }} dikonfirmasi</small>
+                        <p class="text-muted small mb-1">Pesanan Aktif</p>
+                        <h3 class="fw-bold mb-0">{{ $pesananAktif }}</h3>
+                        <small class="text-success">Dibayar & menginap</small>
                     </div>
                     <div class="bg-success bg-opacity-10 rounded p-3">
                         <i class="fa fa-clipboard-list fa-lg text-success"></i>
@@ -61,7 +61,7 @@
                         <h3 class="fw-bold mb-0" style="font-size:1.3rem;">
                             Rp {{ number_format($totalPendapatan, 0, ',', '.') }}
                         </h3>
-                        <small class="text-info">Dari pesanan dikonfirmasi</small>
+                        <small class="text-info">Dari pesanan terbayar</small>
                     </div>
                     <div class="bg-info bg-opacity-10 rounded p-3">
                         <i class="fa fa-wallet fa-lg text-info"></i>
@@ -92,12 +92,28 @@
                             <th>Check-out</th>
                             <th>Total</th>
                             <th>Status</th>
-                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($pesananTerbaru as $p)
-                            @php $detail = $p->detailPemesanan; @endphp
+                            @php
+                                $detail = $p->detailPemesanan;
+                                $badgeMap = [
+                                    'menunggu' => 'bg-warning text-dark',
+                                    'dibayar' => 'bg-success',
+                                    'checked_in' => 'bg-primary',
+                                    'checked_out' => 'bg-info',
+                                    'dibatalkan' => 'bg-secondary',
+                                ];
+                                $labelMap = [
+                                    'menunggu' => 'Menunggu Bayar',
+                                    'dibayar' => 'Dibayar',
+                                    'checked_in' => 'Menginap',
+                                    'checked_out' => 'Selesai',
+                                    'dibatalkan' => 'Dibatalkan',
+                                ];
+                                $status = $p->status ?? 'menunggu';
+                            @endphp
                             <tr>
                                 <td class="fw-semibold">{{ $p->villa->nama_villa }}</td>
                                 <td>
@@ -110,24 +126,9 @@
                                     Rp {{ $detail ? number_format($detail->sub_total, 0, ',', '.') : '-' }}
                                 </td>
                                 <td>
-                                    @php
-                                        $badgeMap = [
-                                            'menunggu' => 'bg-warning text-dark',
-                                            'dikonfirmasi' => 'bg-success',
-                                            'ditolak' => 'bg-danger',
-                                            'dibatalkan' => 'bg-secondary',
-                                            'selesai' => 'bg-info',
-                                        ];
-                                        $status = $p->status ?? 'menunggu';
-                                    @endphp
                                     <span class="badge {{ $badgeMap[$status] ?? 'bg-secondary' }} px-2 py-1">
-                                        {{ ucfirst($status) }}
+                                        {{ $labelMap[$status] ?? ucfirst($status) }}
                                     </span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('owner.pesanan.index') }}" class="btn btn-sm btn-outline-primary">
-                                        Detail
-                                    </a>
                                 </td>
                             </tr>
                         @endforeach

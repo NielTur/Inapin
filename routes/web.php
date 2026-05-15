@@ -7,6 +7,7 @@ use App\Http\Controllers\Frontend\BookingController;
 use App\Http\Controllers\Frontend\AuthController;
 use App\Http\Controllers\Frontend\AkunController;
 use App\Http\Controllers\Frontend\PembayaranController;
+use App\Http\Controllers\Frontend\UlasanController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\VillaController as OwnerVillaController;
 use App\Http\Controllers\Owner\PesananController as OwnerPesananController;
@@ -15,7 +16,7 @@ use App\Http\Controllers\Owner\AkunController as OwnerAkunController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 
 // ===================================================================
-// FRONTEND (Tamu / Customer)  //
+// FRONTEND (Tamu / Customer)
 // ===================================================================
 Route::prefix('')->group(function () {
 
@@ -28,7 +29,7 @@ Route::prefix('')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
-    //Callback Midtrans
+    // Callback Midtrans (no CSRF)
     Route::post('/pembayaran/callback', [PembayaranController::class, 'callback'])
         ->name('pembayaran.callback')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
@@ -36,43 +37,46 @@ Route::prefix('')->group(function () {
     // PROTECTED — harus login sebagai Customer
     Route::middleware(['auth'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+        // Akun
+        Route::get('/akun/profil', [AkunController::class, 'profil'])->name('akun.profil');
+        Route::post('/akun/profil', [AkunController::class, 'updateProfil'])->name('akun.updateProfil');
+
+        // Ulasan
+        Route::post('/ulasan', [UlasanController::class, 'store'])->name('ulasan.store');
+
+        // Booking — URUTAN WAJIB: riwayat → {id}/detail → {id}/bayar → {id}
         Route::get('/booking/riwayat', [BookingController::class, 'riwayat'])->name('booking.riwayat');
+        Route::get('/booking/{id}/detail', [BookingController::class, 'detail'])->name('booking.detail');
+        Route::get('/booking/{id}/bayar', [BookingController::class, 'bayar'])->name('booking.bayar');
         Route::get('/booking/{id}', [BookingController::class, 'form'])->name('booking.form');
         Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
         Route::delete('/booking/{id}/batal', [BookingController::class, 'batal'])->name('booking.batal');
         Route::delete('/booking/{id}/hapus', [BookingController::class, 'hapus'])->name('booking.hapus');
-        Route::get('/akun/profil', [AkunController::class, 'profil'])->name('akun.profil');
-        Route::post('/akun/profil', [AkunController::class, 'updateProfil'])->name('akun.updateProfil');
 
-        //Pembayaran Midtrans
-        Route::get('/pembayaran/{id}', [PembayaranController::class, 'charge'])->name('pembayaran.charge');
+        // Pembayaran
         Route::get('/pembayaran/finish', [PembayaranController::class, 'finish'])->name('pembayaran.finish');
     });
 });
 
 // ===================================================================
-// OWNER  //
+// OWNER
 // ===================================================================
 Route::prefix('owner')->name('owner.')->group(function () {
 
-    // Login & Logout Owner (PUBLIC — belum perlu guard)
     Route::get('/login', [OwnerAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [OwnerAuthController::class, 'login']);
     Route::get('/register', [OwnerAuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [OwnerAuthController::class, 'register']);
 
-    // Panel Owner — PROTECTED dengan guard owner
     Route::middleware(['auth:owner'])->group(function () {
         Route::post('/logout', [OwnerAuthController::class, 'logout'])->name('logout');
 
-        // Profil owner
         Route::get('/akun/profil', [OwnerAkunController::class, 'profil'])->name('akun.profil');
         Route::post('/akun/profil', [OwnerAkunController::class, 'updateProfil'])->name('akun.updateProfil');
 
-        // Dashboard
         Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
 
-        // Villa CRUD
         Route::get('/villa', [OwnerVillaController::class, 'index'])->name('villa.index');
         Route::get('/villa/create', [OwnerVillaController::class, 'create'])->name('villa.create');
         Route::post('/villa', [OwnerVillaController::class, 'store'])->name('villa.store');
@@ -80,23 +84,20 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::put('/villa/{id}', [OwnerVillaController::class, 'update'])->name('villa.update');
         Route::delete('/villa/{id}', [OwnerVillaController::class, 'destroy'])->name('villa.destroy');
 
-        // Pesanan
         Route::get('/pesanan', [OwnerPesananController::class, 'index'])->name('pesanan.index');
-        Route::patch('/pesanan/{id}/konfirmasi', [OwnerPesananController::class, 'konfirmasi'])->name('pesanan.konfirmasi');
-        Route::patch('/pesanan/{id}/tolak', [OwnerPesananController::class, 'tolak'])->name('pesanan.tolak');
+        Route::patch('/pesanan/{id}/checkin', [OwnerPesananController::class, 'checkin'])->name('pesanan.checkin');
+        Route::patch('/pesanan/{id}/checkout', [OwnerPesananController::class, 'checkout'])->name('pesanan.checkout');
     });
 });
 
 // ===================================================================
-// SUPER ADMIN //
+// SUPER ADMIN
 // ===================================================================
 Route::prefix('admin')->name('admin.')->group(function () {
 
-    // Public - login admin
     Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AdminAuthController::class, 'login']);
 
-    // Protected - harus login sebagai admin
     Route::middleware(['auth:admin'])->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
@@ -109,13 +110,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/owner/{id}', [\App\Http\Controllers\Admin\OwnerController::class, 'destroy'])->name('owner.destroy');
 
         Route::get('/villa', [\App\Http\Controllers\Admin\VillaController::class, 'index'])->name('villa.index');
-        Route::patch('/villa/{id}/status', [\App\Http\Controllers\Admin\VillaController::class, 'updateStatus'])->name('villa.status');
-        Route::delete('/villa/{id}', [\App\Http\Controllers\Admin\VillaController::class, 'destroy'])->name('villa.destroy');
         Route::get('/villa/{id}', [\App\Http\Controllers\Admin\VillaController::class, 'show'])->name('villa.show');
+        Route::patch('/villa/{id}/status', [\App\Http\Controllers\Admin\VillaController::class, 'updateStatus'])->name('villa.status');
         Route::patch('/villa/{id}/setujui', [\App\Http\Controllers\Admin\VillaController::class, 'setujui'])->name('villa.setujui');
         Route::patch('/villa/{id}/tolak', [\App\Http\Controllers\Admin\VillaController::class, 'tolak'])->name('villa.tolak');
         Route::patch('/villa/{id}/nonaktifkan', [\App\Http\Controllers\Admin\VillaController::class, 'nonaktifkan'])->name('villa.nonaktifkan');
         Route::patch('/villa/{id}/aktifkan', [\App\Http\Controllers\Admin\VillaController::class, 'aktifkan'])->name('villa.aktifkan');
+        Route::delete('/villa/{id}', [\App\Http\Controllers\Admin\VillaController::class, 'destroy'])->name('villa.destroy');
 
         Route::get('/pesanan', [\App\Http\Controllers\Admin\PesananController::class, 'index'])->name('pesanan.index');
     });

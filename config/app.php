@@ -111,6 +111,8 @@ return [
 
     'faker_locale' => 'en_US',
 
+    'booking_payment_timeout' => env('BOOKING_PAYMENT_TIMEOUT', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

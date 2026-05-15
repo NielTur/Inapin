@@ -514,7 +514,7 @@
         }
         nominatim(queries[index].q)
             .then(function(data) {
-                if (data && data.length > 0) {
+               if (data && data.length > 0) {
                     setMarker(parseFloat(data[0].lat), parseFloat(data[0].lon), queries[index].zoom);
                 } else {
                     tryNext(index + 1);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,11 +18,29 @@ class Pemesanan extends Model
         'metode_pembayaran',
         'tanggal_pemesanan',
         'status',
+        'expires_at',
     ];
 
     protected $casts = [
         'tanggal_pemesanan' => 'datetime',
+        'expires_at' => 'datetime',
     ];
+
+    // ── Scopes ────────────────────────────────────────────────
+
+    public function scopeAktif(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['dibayar', 'checked_in']);
+    }
+
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->where('status', 'menunggu')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<', now());
+    }
+
+    // ── Relationships ──────────────────────────────────────────
 
     public function villa(): BelongsTo
     {

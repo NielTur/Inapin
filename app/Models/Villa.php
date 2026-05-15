@@ -28,6 +28,7 @@ class Villa extends Model
         'facebook',
         'tiktok',
         'status',
+        'tersedia',
         'ulasan',
         'alamat',
     ];

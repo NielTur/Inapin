@@ -17,7 +17,6 @@ class PesananController extends Controller
             ->with(['villa', 'customer', 'detailPemesanan'])
             ->latest();
 
-        // Filter status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -30,27 +29,28 @@ class PesananController extends Controller
         return view('owner.v_pesanan.index', compact('pesanan', 'totalMenunggu'));
     }
 
-    public function konfirmasi($id): RedirectResponse
+    public function checkin($id): RedirectResponse
     {
         $pemesanan = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', Auth::id()))
             ->where('id_pemesanan', $id)
-            ->where('status', 'menunggu')
+            ->where('status', 'dibayar')
             ->firstOrFail();
 
-        $pemesanan->update(['status' => 'dikonfirmasi']);
+        $pemesanan->update(['status' => 'checked_in']);
 
-        return back()->with('success', 'Pesanan berhasil dikonfirmasi!');
+        return back()->with('success', 'Check-in tamu berhasil dikonfirmasi!');
     }
 
-    public function tolak($id): RedirectResponse
+    public function checkout($id): RedirectResponse
     {
         $pemesanan = Pemesanan::whereHas('villa', fn($q) => $q->where('id_owner', Auth::id()))
             ->where('id_pemesanan', $id)
-            ->where('status', 'menunggu')
+            ->where('status', 'checked_in')
             ->firstOrFail();
 
-        $pemesanan->update(['status' => 'ditolak']);
+        $pemesanan->update(['status' => 'checked_out']);
+        $pemesanan->villa->update(['tersedia' => true]);
 
-        return back()->with('success', 'Pesanan berhasil ditolak.');
+        return back()->with('success', 'Check-out tamu berhasil dikonfirmasi!');
     }
 }
