@@ -14,6 +14,7 @@
         transform-origin: center center;
     }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 @endpush
 
 @push('scripts')
@@ -99,6 +100,29 @@
         }
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+<script>
+    flatpickr(".daterange", {
+        mode: "range",
+        minDate: "today",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d M Y",
+        locale: "id",
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                var start = flatpickr.formatDate(selectedDates[0], "Y-m-d");
+                var end = flatpickr.formatDate(selectedDates[1], "Y-m-d");
+                document.getElementById('inputCheckinReal').value = start;
+                document.getElementById('inputCheckoutReal').value = end;
+            } else {
+                document.getElementById('inputCheckinReal').value = '';
+                document.getElementById('inputCheckoutReal').value = '';
+            }
+        }
+    });
+</script>
 @endpush
 
 
@@ -151,16 +175,17 @@
                         value="{{ request('kota') }}">
                 </div>
 
-                {{-- Check-in --}}
-                <div class="col-md-3">
-                    <input type="date" name="checkin" class="form-control border-0 py-3"
-                        value="{{ request('checkin') }}">
-                </div>
-
-                {{-- Check-out --}}
-                <div class="col-md-2">
-                    <input type="date" name="checkout" class="form-control border-0 py-3"
-                        value="{{ request('checkout') }}">
+                {{-- Tanggal Menginap --}}
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center bg-white rounded">
+                        <i class="fa fa-calendar-alt text-muted ms-3"></i>
+                        <input type="text" class="daterange form-control border-0 py-3 ps-2 bg-white"
+                            placeholder="Check-in - Check-out"
+                            value="{{ request('checkin') && request('checkout') ? request('checkin').' to '.request('checkout') : '' }}"
+                            style="box-shadow:none; cursor:pointer;" readonly>
+                        <input type="hidden" name="checkin" id="inputCheckinReal" value="{{ request('checkin') }}">
+                        <input type="hidden" name="checkout" id="inputCheckoutReal" value="{{ request('checkout') }}">
+                    </div>
                 </div>
 
                 <div class="col-md-2 position-relative" style="overflow:visible;">
@@ -255,8 +280,7 @@
 
             {{-- ============ SIDEBAR FILTER (kiri) ============ --}}
             <div class="col-lg-3">
-                <form action="{{ route('villa.index') }}" method="GET" id="filterForm">
-
+                <form action="{{ route('villa.index') }}" method="GET" id="filterForm" onsubmit="return stripRupiah(this)">
                     <div class="bg-white rounded-4 shadow-sm p-4 mb-4" style="border: 1px solid #f0f0f0;">
 
                         {{-- Header --}}
@@ -267,7 +291,7 @@
                                 </span>
                                 Filter
                             </h6>
-                            @if(request()->hasAny(['harga_min','harga_max','rating','kota','fasilitas','kamar','sort']))
+                            @if(request()->hasAny(['harga_min','harga_max','rating','kota','kecamatan','fasilitas','kamar','sort']))
                             <a href="{{ route('villa.index') }}" class="text-muted small text-decoration-none" style="font-size:12px;">
                                 <i class="fa fa-times me-1"></i> Reset
                             </a>
@@ -277,15 +301,24 @@
                         {{-- ── RENTANG HARGA ───── --}}
                         <div class="mb-4 pb-4" style="border-bottom:1px solid #f4f4f4;">
                             <p class="filter-section-title">Rentang Harga</p>
+
+                            @if(request()->filled('kota'))
+                            <input type="hidden" name="kota" value="{{ request('kota') }}">
+                            @endif
+                            @if(request()->filled('kecamatan'))
+                            <input type="hidden" name="kecamatan" value="{{ request('kecamatan') }}">
+                            @endif
+
                             <div class="row g-2">
                                 <div class="col-6">
                                     <label class="form-label small text-muted mb-1">Min</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-end-0 text-muted" style="font-size:11px;">Rp</span>
-                                        <input type="number" name="harga_min" class="form-control border-start-0 ps-0"
+                                        <input type="text" inputmode="numeric" name="harga_min"
+                                            class="form-control border-start-0 ps-0 input-rupiah"
                                             placeholder="0"
-                                            value="{{ request('harga_min') }}"
-                                            min="0" step="100000"
+                                            value="{{ request('harga_min') ? number_format(request('harga_min'), 0, ',', '.') : '' }}"
+                                            oninput="formatRupiah(this)"
                                             style="font-size:13px; border-radius:0 8px 8px 0;">
                                     </div>
                                 </div>
@@ -293,14 +326,19 @@
                                     <label class="form-label small text-muted mb-1">Max</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-end-0 text-muted" style="font-size:11px;">Rp</span>
-                                        <input type="number" name="harga_max" class="form-control border-start-0 ps-0"
+                                        <input type="text" inputmode="numeric" name="harga_max"
+                                            class="form-control border-start-0 ps-0 input-rupiah"
                                             placeholder="10.000.000"
-                                            value="{{ request('harga_max') }}"
-                                            min="0" step="100000"
+                                            value="{{ request('harga_max') ? number_format(request('harga_max'), 0, ',', '.') : '' }}"
+                                            oninput="formatRupiah(this)"
                                             style="font-size:13px; border-radius:0 8px 8px 0;">
                                     </div>
                                 </div>
                             </div>
+                            <button type="submit" class="btn btn-sm w-100 mt-3 rounded-3 fw-semibold"
+                                style="background:var(--primary); color:#fff; font-size:12px;">
+                                <i class="fa fa-search me-1"></i> Terapkan Harga
+                            </button>
                         </div>
 
                         {{-- ===== RATING ===== --}}
@@ -360,18 +398,60 @@
                             @endforeach
                         </div>
 
-                        {{-- ===== AREA  ===== --}}
+                        {{-- ===== AREA ===== --}}
                         <div>
-                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Area</h6>
-                            @php $kotaShown = 0; @endphp
+                            @if(request()->filled('kota'))
+                            <h6 class="fw-semibold mb-1" style="font-size:13px; color:#333;">
+                                Area di <span style="color:var(--primary);">{{ request('kota') }}</span>
+                            </h6>
+                            <small class="text-muted d-block mb-3" style="font-size:11px;">
+                                <a href="{{ route('villa.index', array_merge(request()->except(['kota','kecamatan']))) }}"
+                                    class="text-muted text-decoration-none">
+                                    <i class="fa fa-times me-1"></i> Ganti kota
+                                </a>
+                            </small>
+
+                            @if($kecamatanList->count() > 0)
+                            @foreach($kecamatanList as $kecamatan)
+                            @php
+                            $jumlahPerKec = \App\Models\Villa::where('status','disetujui')
+                            ->where('kota', 'like', '%'.request('kota').'%')
+                            ->where('kecamatan', $kecamatan)->count();
+                            @endphp
+                            <div class="d-flex align-items-center justify-content-between py-2"
+                                style="border-bottom: 1px solid #fafafa;">
+                                <label class="d-flex align-items-center gap-2 mb-0 small w-100"
+                                    for="kec_{{ Str::slug($kecamatan) }}"
+                                    style="cursor:pointer; font-weight: {{ request('kecamatan') == $kecamatan ? '600' : '400' }};">
+                                    <input class="form-check-input m-0 flex-shrink-0" type="radio"
+                                        name="kecamatan"
+                                        id="kec_{{ Str::slug($kecamatan) }}"
+                                        value="{{ $kecamatan }}"
+                                        {{ request('kecamatan') == $kecamatan ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                    {{ $kecamatan }}
+                                </label>
+                                <span class="text-muted flex-shrink-0" style="font-size:11px;">({{ $jumlahPerKec }})</span>
+                            </div>
+                            @endforeach
+                            @else
+                            <p class="text-muted small mb-0" style="font-size:12px;">
+                                <i class="fa fa-info-circle me-1"></i>
+                                Data area belum tersedia untuk kota ini.
+                            </p>
+                            @endif
+
+                            @else
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Area / Kota</h6>
                             @foreach($kotaList as $kota)
                             @php
-                            $jumlahVilla = \App\Models\Villa::where('status','aktif')->where('kota',$kota)->count();
+                            $jumlahVilla = \App\Models\Villa::where('status','disetujui')->where('kota',$kota)->count();
                             @endphp
-                            <div class="d-flex align-items-center justify-content-between py-2 {{ $kotaShown >= 5 ? 'kota-extra' : '' }}"
-                                style="border-bottom: 1px solid #fafafa; {{ $kotaShown >= 5 ? 'display:none!important;' : '' }}">
+                            <div class="d-flex align-items-center justify-content-between py-2"
+                                style="border-bottom: 1px solid #fafafa;">
                                 <label class="d-flex align-items-center gap-2 mb-0 small w-100"
-                                    for="kota_{{ Str::slug($kota) }}" style="cursor:pointer; font-weight: {{ request('kota') == $kota ? '600' : '400' }};">
+                                    for="kota_{{ Str::slug($kota) }}"
+                                    style="cursor:pointer; font-weight: {{ request('kota') == $kota ? '600' : '400' }};">
                                     <input class="form-check-input m-0 flex-shrink-0" type="radio"
                                         name="kota"
                                         id="kota_{{ Str::slug($kota) }}"
@@ -382,14 +462,7 @@
                                 </label>
                                 <span class="text-muted flex-shrink-0" style="font-size:11px;">({{ $jumlahVilla }})</span>
                             </div>
-                            @php $kotaShown++; @endphp
                             @endforeach
-
-                            @if($kotaList->count() > 5)
-                            <button type="button" class="btn btn-link p-0 mt-2 text-primary small text-decoration-none"
-                                id="btnLihatSemua" onclick="lihatSemuaKota()">
-                                Lihat Semua <i class="fa fa-chevron-down ms-1" style="font-size:10px;"></i>
-                            </button>
                             @endif
                         </div>
 
@@ -397,33 +470,63 @@
                 </form>
             </div>
 
+
             @push('scripts')
             <script>
-                function updateHarga(type, value) {
-                    var min = parseInt(document.getElementById('sliderMin').value);
-                    var max = parseInt(document.getElementById('sliderMax').value);
-
-                    if (type === 'min' && min > max) {
-                        min = max;
-                        document.getElementById('sliderMin').value = min;
-                    }
-                    if (type === 'max' && max < min) {
-                        max = min;
-                        document.getElementById('sliderMax').value = max;
-                    }
-
-                    document.getElementById('inputHargaMin').value = min;
-                    document.getElementById('inputHargaMax').value = max;
-                    document.getElementById('labelMin').textContent = 'Rp ' + min.toLocaleString('id-ID');
-                    document.getElementById('labelMax').textContent = 'Rp ' + max.toLocaleString('id-ID');
+                function formatRupiah(el) {
+                    var raw = el.value.replace(/\D/g, '');
+                    el.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
                 }
 
-                function lihatSemuaKota() {
-                    document.querySelectorAll('.kota-extra').forEach(function(el) {
-                        el.style.removeProperty('display');
-                        el.style.setProperty('border-bottom', '1px solid #fafafa');
+                function stripRupiah(form) {
+                    form.querySelectorAll('.input-rupiah').forEach(function(el) {
+                        el.value = el.value.replace(/\./g, '');
                     });
-                    document.getElementById('btnLihatSemua').style.display = 'none';
+                    return true;
+                }
+
+                <
+                script >
+                    function updateHarga(type, value) {
+                        var min = parseInt(document.getElementById('sliderMin').value);
+                        var max = parseInt(document.getElementById('sliderMax').value);
+
+                        if (type === 'min' && min > max) {
+                            min = max;
+                            document.getElementById('sliderMin').value = min;
+                        }
+                        if (type === 'max' && max < min) {
+                            max = min;
+                            document.getElementById('sliderMax').value = max;
+                        }
+
+                        document.getElementById('inputHargaMin').value = min;
+                        document.getElementById('inputHargaMax').value = max;
+                        document.getElementById('labelMin').textContent = 'Rp ' + min.toLocaleString('id-ID');
+                        document.getElementById('labelMax').textContent = 'Rp ' + max.toLocaleString('id-ID');
+                    }
+
+                function lihatSemuaKota() {
+                    var extras = document.querySelectorAll('.kota-extra');
+                    var btn = document.getElementById('btnLihatSemua');
+                    var expanded = btn.dataset.expanded === 'true';
+
+                    if (expanded) {
+                        // Collapse — sembunyiin lagi
+                        extras.forEach(function(el) {
+                            el.style.display = 'none';
+                        });
+                        btn.innerHTML = 'Lihat Semua <i class="fa fa-chevron-down ms-1" style="font-size:10px;"></i>';
+                        btn.dataset.expanded = 'false';
+                    } else {
+                        // Expand — munculin semua
+                        extras.forEach(function(el) {
+                            el.style.removeProperty('display');
+                            el.style.setProperty('border-bottom', '1px solid #fafafa');
+                        });
+                        btn.innerHTML = 'Lihat Sebagian <i class="fa fa-chevron-up ms-1" style="font-size:10px;"></i>';
+                        btn.dataset.expanded = 'true';
+                    }
                 }
             </script>
             @endpush

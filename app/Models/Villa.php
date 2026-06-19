@@ -30,6 +30,7 @@ class Villa extends Model
         'facebook',
         'tiktok',
         'status',
+        'catatan_admin',
         'tersedia',
         'ulasan',
         'alamat',

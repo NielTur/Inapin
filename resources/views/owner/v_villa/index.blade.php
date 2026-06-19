@@ -55,12 +55,24 @@
                         @if($villa->status === 'disetujui')
                         <span class="badge bg-success px-2 py-1">Aktif</span>
                         @elseif($villa->status === 'pending')
-                        <span class="badge bg-warning text-dark px-2 py-1">Menunggu</span>
+                        <span class="badge bg-warning text-dark px-2 py-1">Menunggu Review</span>
                         @elseif($villa->status === 'ditolak')
                         <span class="badge bg-danger px-2 py-1">Ditolak</span>
+                        @if($villa->catatan_admin)
+                        <div class="mt-1" style="font-size:11px; max-width:180px;">
+                            <span class="text-danger"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="{{ $villa->catatan_admin }}">
+                                <i class="fa fa-exclamation-circle me-1"></i>
+                                {{ Str::limit($villa->catatan_admin, 40) }}
+                            </span>
+                        </div>
+                        @endif
                         @else
                         <span class="badge bg-secondary px-2 py-1">Nonaktif</span>
                         @endif
+
                     </td>
                     <td>
                         <div class="d-flex gap-2">

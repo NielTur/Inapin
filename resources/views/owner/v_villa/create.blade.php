@@ -7,7 +7,7 @@
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <form action="{{ route('owner.villa.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('owner.villa.store') }}" method="POST" enctype="multipart/form-data" onsubmit="return stripRupiah(this)">
             @csrf
 
             {{-- Info Dasar --}}
@@ -24,7 +24,7 @@
                             placeholder="Contoh: Villa Bukit Indah"
                             value="{{ old('nama_villa') }}" required>
                         @error('nama_villa')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -34,7 +34,7 @@
                             class="form-control @error('deskripsi') is-invalid @enderror"
                             placeholder="Ceritakan keunggulan villa Anda...">{{ old('deskripsi') }}</textarea>
                         @error('deskripsi')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -45,7 +45,7 @@
                             class="form-control @error('alamat') is-invalid @enderror"
                             placeholder="Contoh: Jl. Bukit Indah No.5, RT 01/RW 02">{{ old('alamat') }}</textarea>
                         @error('alamat')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         <div class="form-text">Isi dengan nama jalan, nomor, RT/RW.</div>
                     </div>
@@ -57,7 +57,7 @@
                             placeholder="Contoh: Menteng"
                             value="{{ old('kelurahan') }}">
                         @error('kelurahan')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -68,7 +68,7 @@
                             placeholder="Contoh: Cempaka Putih"
                             value="{{ old('kecamatan') }}">
                         @error('kecamatan')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -79,7 +79,7 @@
                             placeholder="Contoh: Jakarta"
                             value="{{ old('kota') }}" required>
                         @error('kota')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -90,7 +90,7 @@
                             placeholder="Contoh: DKI Jakarta"
                             value="{{ old('provinsi') }}">
                         @error('provinsi')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -102,7 +102,7 @@
                             placeholder="Contoh: 10"
                             value="{{ old('kapasitas') }}" min="1" required>
                         @error('kapasitas')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -110,13 +110,14 @@
                         <label class="form-label fw-semibold">Harga per Malam (Rp) <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
-                            <input type="number" name="harga"
-                                class="form-control @error('harga') is-invalid @enderror"
-                                placeholder="Contoh: 1500000"
-                                value="{{ old('harga') }}" min="0" required>
+                            <input type="text" inputmode="numeric" name="harga"
+                                class="form-control input-rupiah @error('harga') is-invalid @enderror"
+                                placeholder="Contoh: 1.500.000"
+                                value="{{ old('harga') ? number_format(old('harga'), 0, ',', '.') : '' }}"
+                                oninput="formatRupiah(this)" required>
                         </div>
                         @error('harga')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -127,7 +128,7 @@
                             placeholder="Contoh: 3"
                             value="{{ old('jumlah_kamar', 1) }}" min="1" required>
                         @error('jumlah_kamar')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -138,7 +139,7 @@
                             placeholder="Contoh: 2"
                             value="{{ old('jumlah_kamar_mandi', 1) }}" min="1" required>
                         @error('jumlah_kamar_mandi')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -152,19 +153,19 @@
                 </h6>
                 <div id="fasilitasContainer">
                     @php
-                        $fasilitasDefault = ['Kolam Renang', 'WiFi Gratis', 'Dapur Lengkap', 'Parkir Luas', 'AC Setiap Kamar', 'BBQ Area'];
+                    $fasilitasDefault = ['Kolam Renang', 'WiFi Gratis', 'Dapur Lengkap', 'Parkir Luas', 'AC Setiap Kamar', 'BBQ Area'];
                     @endphp
                     @foreach($fasilitasDefault as $fas)
-                        <div class="input-group mb-2 fasilitas-item">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="fa fa-check text-primary"></i>
-                            </span>
-                            <input type="text" name="fasilitas[]" class="form-control border-start-0"
-                                value="{{ $fas }}" placeholder="Nama fasilitas">
-                            <button type="button" class="btn btn-outline-danger btn-hapus-fasilitas">
-                                <i class="fa fa-times"></i>
-                            </button>
-                        </div>
+                    <div class="input-group mb-2 fasilitas-item">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fa fa-check text-primary"></i>
+                        </span>
+                        <input type="text" name="fasilitas[]" class="form-control border-start-0"
+                            value="{{ $fas }}" placeholder="Nama fasilitas">
+                        <button type="button" class="btn btn-outline-danger btn-hapus-fasilitas">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
                     @endforeach
                 </div>
                 <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btnTambahFasilitas">
@@ -225,7 +226,7 @@
                     onchange="previewFotoVilla(this)">
                 <small class="text-muted">Format: JPG, PNG, WEBP. Maks 2MB per foto. Bisa pilih lebih dari 1.</small>
                 @error('foto.*')
-                    <div class="text-danger small mt-1">{{ $message }}</div>
+                <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
                 <div id="previewFotoContainer" class="d-flex flex-wrap gap-2 mt-3"></div>
             </div>
@@ -275,12 +276,12 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// ===== FASILITAS =====
-document.getElementById('btnTambahFasilitas').addEventListener('click', function () {
-    var container = document.getElementById('fasilitasContainer');
-    var div = document.createElement('div');
-    div.className = 'input-group mb-2 fasilitas-item';
-    div.innerHTML = `
+    // ===== FASILITAS =====
+    document.getElementById('btnTambahFasilitas').addEventListener('click', function() {
+        var container = document.getElementById('fasilitasContainer');
+        var div = document.createElement('div');
+        div.className = 'input-group mb-2 fasilitas-item';
+        div.innerHTML = `
         <span class="input-group-text bg-light border-end-0">
             <i class="fa fa-check text-primary"></i>
         </span>
@@ -289,249 +290,302 @@ document.getElementById('btnTambahFasilitas').addEventListener('click', function
             <i class="fa fa-times"></i>
         </button>
     `;
-    container.appendChild(div);
-});
-
-document.addEventListener('click', function (e) {
-    if (e.target.closest('.btn-hapus-fasilitas')) {
-        e.target.closest('.fasilitas-item').remove();
-    }
-});
-
-// ===== PREVIEW FOTO =====
-function previewFotoVilla(input) {
-    var container = document.getElementById('previewFotoContainer');
-    container.innerHTML = '';
-    if (input.files) {
-        Array.from(input.files).forEach(function (file) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                var img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'rounded border';
-                img.style = 'width:100px; height:75px; object-fit:cover;';
-                container.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-}
-
-// ===== MAP PICKER =====
-document.addEventListener('DOMContentLoaded', function () {
-
-    var mapPicker  = L.map('mapPicker').setView([-6.2088, 106.8456], 5);
-    var pinMarker  = null;
-
-    L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        subdomains : ['0', '1', '2', '3'],
-        attribution : '&copy; <a href="https://www.google.com/maps">Google Maps</a>',
-        maxZoom : 20,
-    }).addTo(mapPicker);
-    // ── Core: set/update pin ──────────────────────────────────
-    function setPin(lat, lng, zoom) {
-        if (pinMarker) mapPicker.removeLayer(pinMarker);
-        pinMarker = L.marker([lat, lng], { draggable: true }).addTo(mapPicker);
-        mapPicker.setView([lat, lng], zoom || 16);
-        updateKoordinatDisplay(lat, lng);
-
-        pinMarker.on('dragend', function (e) {
-            var pos = e.target.getLatLng();
-            updateKoordinatDisplay(pos.lat, pos.lng);
-        });
-    }
-
-    function updateKoordinatDisplay(lat, lng) {
-        document.getElementById('inputLatitude').value   = lat.toFixed(8);
-        document.getElementById('inputLongitude').value  = lng.toFixed(8);
-        document.getElementById('displayKoordinat').value =
-            lat.toFixed(6) + ', ' + lng.toFixed(6);
-    }
-
-    // ── Klik langsung di peta ─────────────────────────────────
-    mapPicker.on('click', function (e) {
-        setPin(e.latlng.lat, e.latlng.lng, 16);
+        container.appendChild(div);
     });
 
-    // ── Helper: ambil semua field alamat dari form ────────────
-    function buatFieldsDariForm() {
-        return {
-            alamat    : document.getElementById('fieldAlamat')?.value.trim()    || '',
-            kelurahan : document.getElementById('fieldKelurahan')?.value.trim() || '',
-            kecamatan : document.getElementById('fieldKecamatan')?.value.trim() || '',
-            kota      : document.getElementById('fieldKota')?.value.trim()      || '',
-            provinsi  : document.getElementById('fieldProvinsi')?.value.trim()  || '',
-        };
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-hapus-fasilitas')) {
+            e.target.closest('.fasilitas-item').remove();
+        }
+    });
+
+    // ===== PREVIEW FOTO =====
+    function previewFotoVilla(input) {
+        var container = document.getElementById('previewFotoContainer');
+        container.innerHTML = '';
+        if (input.files) {
+            Array.from(input.files).forEach(function(file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'rounded border';
+                    img.style = 'width:100px; height:75px; object-fit:cover;';
+                    container.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     }
 
-    // ── Strategy 1: Structured Search (lebih akurat) ──────────
-    function geocodeStructured(fields, onDone) {
-        var street = [fields.alamat, fields.kelurahan, fields.kecamatan]
-            .filter(Boolean).join(', ');
+    // ===== MAP PICKER =====
+    document.addEventListener('DOMContentLoaded', function() {
 
-        // Coba dari paling spesifik ke paling umum
-        var attempts = [];
+        var mapPicker = L.map('mapPicker').setView([-6.2088, 106.8456], 5);
+        var pinMarker = null;
 
-        if (street && fields.kota) {
-            attempts.push({ street: street, city: fields.kota, state: fields.provinsi });
+        L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            subdomains: ['0', '1', '2', '3'],
+            attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>',
+            maxZoom: 20,
+        }).addTo(mapPicker);
+        // ── Core: set/update pin ──────────────────────────────────
+        function setPin(lat, lng, zoom) {
+            if (pinMarker) mapPicker.removeLayer(pinMarker);
+            pinMarker = L.marker([lat, lng], {
+                draggable: true
+            }).addTo(mapPicker);
+            mapPicker.setView([lat, lng], zoom || 16);
+            updateKoordinatDisplay(lat, lng);
+
+            pinMarker.on('dragend', function(e) {
+                var pos = e.target.getLatLng();
+                updateKoordinatDisplay(pos.lat, pos.lng);
+            });
         }
 
-        var streetShort = [fields.kecamatan, fields.kelurahan].filter(Boolean).join(', ');
-        if (streetShort && fields.kota) {
-            attempts.push({ street: streetShort, city: fields.kota, state: fields.provinsi });
+        function updateKoordinatDisplay(lat, lng) {
+            document.getElementById('inputLatitude').value = lat.toFixed(8);
+            document.getElementById('inputLongitude').value = lng.toFixed(8);
+            document.getElementById('displayKoordinat').value =
+                lat.toFixed(6) + ', ' + lng.toFixed(6);
         }
 
-        if (fields.kota) {
-            attempts.push({ city: fields.kota, state: fields.provinsi });
+        // ── Klik langsung di peta ─────────────────────────────────
+        mapPicker.on('click', function(e) {
+            setPin(e.latlng.lat, e.latlng.lng, 16);
+        });
+
+        // ── Helper: ambil semua field alamat dari form ────────────
+        function buatFieldsDariForm() {
+            return {
+                alamat: document.getElementById('fieldAlamat')?.value.trim() || '',
+                kelurahan: document.getElementById('fieldKelurahan')?.value.trim() || '',
+                kecamatan: document.getElementById('fieldKecamatan')?.value.trim() || '',
+                kota: document.getElementById('fieldKota')?.value.trim() || '',
+                provinsi: document.getElementById('fieldProvinsi')?.value.trim() || '',
+            };
         }
 
-        function tryStructured(idx) {
-            if (idx >= attempts.length) {
-                // Semua structured gagal → fallback free-text
-                var fallback = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
-                    .filter(Boolean).join(', ');
-                geocodeFreeText(fallback, onDone);
-                return;
+        // ── Strategy 1: Structured Search (lebih akurat) ──────────
+        function geocodeStructured(fields, onDone) {
+            var street = [fields.alamat, fields.kelurahan, fields.kecamatan]
+                .filter(Boolean).join(', ');
+
+            // Coba dari paling spesifik ke paling umum
+            var attempts = [];
+
+            if (street && fields.kota) {
+                attempts.push({
+                    street: street,
+                    city: fields.kota,
+                    state: fields.provinsi
+                });
             }
 
-            var base = { format: 'json', limit: 1, countrycodes: 'id' };
-            var params = Object.assign({}, base, attempts[idx]);
+            var streetShort = [fields.kecamatan, fields.kelurahan].filter(Boolean).join(', ');
+            if (streetShort && fields.kota) {
+                attempts.push({
+                    street: streetShort,
+                    city: fields.kota,
+                    state: fields.provinsi
+                });
+            }
 
-            // Bersihkan key kosong
-            Object.keys(params).forEach(function (k) {
-                if (!params[k]) delete params[k];
-            });
+            if (fields.kota) {
+                attempts.push({
+                    city: fields.kota,
+                    state: fields.provinsi
+                });
+            }
 
-            var qs = Object.keys(params)
-                .map(function (k) {
-                    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-                }).join('&');
-
-            fetch('https://nominatim.openstreetmap.org/search?' + qs,
-                { headers: { 'User-Agent': 'inapin-villa/1.0', 'Accept-Language': 'id,en' } })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                if (data && data.length > 0) {
-                    setPin(parseFloat(data[0].lat), parseFloat(data[0].lon), 17);
-                    onDone();
-                } else {
-                    tryStructured(idx + 1);
+            function tryStructured(idx) {
+                if (idx >= attempts.length) {
+                    // Semua structured gagal → fallback free-text
+                    var fallback = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
+                        .filter(Boolean).join(', ');
+                    geocodeFreeText(fallback, onDone);
+                    return;
                 }
-            })
-            .catch(function () { tryStructured(idx + 1); });
+
+                var base = {
+                    format: 'json',
+                    limit: 1,
+                    countrycodes: 'id'
+                };
+                var params = Object.assign({}, base, attempts[idx]);
+
+                // Bersihkan key kosong
+                Object.keys(params).forEach(function(k) {
+                    if (!params[k]) delete params[k];
+                });
+
+                var qs = Object.keys(params)
+                    .map(function(k) {
+                        return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+                    }).join('&');
+
+                fetch('https://nominatim.openstreetmap.org/search?' + qs, {
+                        headers: {
+                            'User-Agent': 'inapin-villa/1.0',
+                            'Accept-Language': 'id,en'
+                        }
+                    })
+                    .then(function(res) {
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.length > 0) {
+                            setPin(parseFloat(data[0].lat), parseFloat(data[0].lon), 17);
+                            onDone();
+                        } else {
+                            tryStructured(idx + 1);
+                        }
+                    })
+                    .catch(function() {
+                        tryStructured(idx + 1);
+                    });
+            }
+
+            tryStructured(0);
         }
 
-        tryStructured(0);
-    }
-
-    // ── Strategy 2: Free-text fallback ───────────────────────
-    function geocodeFreeText(query, onDone) {
-        if (!query) { onDone(); return; }
-
-        var parts = query.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var queries = [query + ', Indonesia'];
-        for (var i = 1; i < parts.length - 1; i++) {
-            queries.push(parts.slice(i).join(', ') + ', Indonesia');
-        }
-        if (parts.length >= 2) queries.push(parts.slice(-2).join(', ') + ', Indonesia');
-        queries.push(parts[parts.length - 1] + ', Indonesia');
-
-        function tryFree(idx) {
-            if (idx >= queries.length) {
-                alert('Lokasi tidak ditemukan. Coba geser pin manual di peta.');
+        // ── Strategy 2: Free-text fallback ───────────────────────
+        function geocodeFreeText(query, onDone) {
+            if (!query) {
                 onDone();
                 return;
             }
-            fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=' +
-                encodeURIComponent(queries[idx]),
-                { headers: { 'User-Agent': 'inapin-villa/1.0', 'Accept-Language': 'id,en' } })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                if (data && data.length > 0) {
-                    setPin(parseFloat(data[0].lat), parseFloat(data[0].lon), 16);
+
+            var parts = query.split(',').map(function(s) {
+                return s.trim();
+            }).filter(Boolean);
+            var queries = [query + ', Indonesia'];
+            for (var i = 1; i < parts.length - 1; i++) {
+                queries.push(parts.slice(i).join(', ') + ', Indonesia');
+            }
+            if (parts.length >= 2) queries.push(parts.slice(-2).join(', ') + ', Indonesia');
+            queries.push(parts[parts.length - 1] + ', Indonesia');
+
+            function tryFree(idx) {
+                if (idx >= queries.length) {
+                    alert('Lokasi tidak ditemukan. Coba geser pin manual di peta.');
                     onDone();
-                } else {
-                    tryFree(idx + 1);
+                    return;
                 }
-            })
-            .catch(function () { tryFree(idx + 1); });
+                fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=' +
+                        encodeURIComponent(queries[idx]), {
+                            headers: {
+                                'User-Agent': 'inapin-villa/1.0',
+                                'Accept-Language': 'id,en'
+                            }
+                        })
+                    .then(function(res) {
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.length > 0) {
+                            setPin(parseFloat(data[0].lat), parseFloat(data[0].lon), 16);
+                            onDone();
+                        } else {
+                            tryFree(idx + 1);
+                        }
+                    })
+                    .catch(function() {
+                        tryFree(idx + 1);
+                    });
+            }
+
+            tryFree(0);
         }
 
-        tryFree(0);
-    }
+        // ── Main: cariLokasi() — dipanggil tombol & blur ──────────
+        function cariLokasi() {
+            var btnCari = document.getElementById('btnCariLokasi');
+            btnCari.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Mencari...';
+            btnCari.disabled = true;
 
-    // ── Main: cariLokasi() — dipanggil tombol & blur ──────────
-    function cariLokasi() {
-        var btnCari = document.getElementById('btnCariLokasi');
-        btnCari.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Mencari...';
-        btnCari.disabled  = true;
+            var onDone = function() {
+                btnCari.innerHTML = '<i class="fa fa-search me-1"></i> Cari';
+                btnCari.disabled = false;
+            };
 
-        var onDone = function () {
-            btnCari.innerHTML = '<i class="fa fa-search me-1"></i> Cari';
-            btnCari.disabled  = false;
-        };
+            var manualQuery = document.getElementById('searchAlamat').value.trim();
+            var fields = buatFieldsDariForm();
 
-        var manualQuery = document.getElementById('searchAlamat').value.trim();
-        var fields      = buatFieldsDariForm();
+            // Kalau search box diisi manual (beda dari gabungan form) → free-text
+            var formQuery = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
+                .filter(Boolean).join(', ');
 
-        // Kalau search box diisi manual (beda dari gabungan form) → free-text
-        var formQuery = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
-            .filter(Boolean).join(', ');
-
-        if (manualQuery && manualQuery !== formQuery) {
-            geocodeFreeText(manualQuery, onDone);
-        } else {
-            // Dari form → pakai structured search
-            geocodeStructured(fields, onDone);
+            if (manualQuery && manualQuery !== formQuery) {
+                geocodeFreeText(manualQuery, onDone);
+            } else {
+                // Dari form → pakai structured search
+                geocodeStructured(fields, onDone);
+            }
         }
-    }
 
-    // ── Auto-geocode saat field Kota di-blur ──────────────────
-    var fieldKota = document.getElementById('fieldKota');
-    if (fieldKota) {
-        fieldKota.addEventListener('blur', function () {
-            if (!document.getElementById('inputLatitude').value && this.value.trim()) {
-                var fields = buatFieldsDariForm();
-                document.getElementById('searchAlamat').value =
-                    [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
-                    .filter(Boolean).join(', ');
+        // ── Auto-geocode saat field Kota di-blur ──────────────────
+        var fieldKota = document.getElementById('fieldKota');
+        if (fieldKota) {
+            fieldKota.addEventListener('blur', function() {
+                if (!document.getElementById('inputLatitude').value && this.value.trim()) {
+                    var fields = buatFieldsDariForm();
+                    document.getElementById('searchAlamat').value = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
+                        .filter(Boolean).join(', ');
+                    cariLokasi();
+                }
+            });
+        }
+
+        // ── Tombol "Dari Alamat Form" ─────────────────────────────
+        document.getElementById('btnGeocodeForm').addEventListener('click', function() {
+            var fields = buatFieldsDariForm();
+            if (!fields.kota) {
+                alert('Isi minimal kolom Kota/Kabupaten terlebih dahulu.');
+                return;
+            }
+            document.getElementById('searchAlamat').value = [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
+                .filter(Boolean).join(', ');
+            cariLokasi();
+        });
+
+        // ── Tombol Cari manual ────────────────────────────────────
+        document.getElementById('btnCariLokasi').addEventListener('click', cariLokasi);
+
+        document.getElementById('searchAlamat').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 cariLokasi();
             }
         });
+
+        // ── Tombol Reset ──────────────────────────────────────────
+        document.getElementById('btnResetPin').addEventListener('click', function() {
+            if (pinMarker) mapPicker.removeLayer(pinMarker);
+            pinMarker = null;
+            document.getElementById('inputLatitude').value = '';
+            document.getElementById('inputLongitude').value = '';
+            document.getElementById('displayKoordinat').value = '';
+            document.getElementById('searchAlamat').value = '';
+            mapPicker.setView([-6.2088, 106.8456], 5);
+        });
+
+        setTimeout(function() {
+            mapPicker.invalidateSize();
+        }, 300);
+    });
+
+    function formatRupiah(el) {
+        var raw = el.value.replace(/\D/g, '');
+        el.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
     }
 
-    // ── Tombol "Dari Alamat Form" ─────────────────────────────
-    document.getElementById('btnGeocodeForm').addEventListener('click', function () {
-        var fields = buatFieldsDariForm();
-        if (!fields.kota) {
-            alert('Isi minimal kolom Kota/Kabupaten terlebih dahulu.');
-            return;
-        }
-        document.getElementById('searchAlamat').value =
-            [fields.alamat, fields.kelurahan, fields.kecamatan, fields.kota, fields.provinsi]
-            .filter(Boolean).join(', ');
-        cariLokasi();
-    });
-
-    // ── Tombol Cari manual ────────────────────────────────────
-    document.getElementById('btnCariLokasi').addEventListener('click', cariLokasi);
-
-    document.getElementById('searchAlamat').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); cariLokasi(); }
-    });
-
-    // ── Tombol Reset ──────────────────────────────────────────
-    document.getElementById('btnResetPin').addEventListener('click', function () {
-        if (pinMarker) mapPicker.removeLayer(pinMarker);
-        pinMarker = null;
-        document.getElementById('inputLatitude').value    = '';
-        document.getElementById('inputLongitude').value   = '';
-        document.getElementById('displayKoordinat').value = '';
-        document.getElementById('searchAlamat').value     = '';
-        mapPicker.setView([-6.2088, 106.8456], 5);
-    });
-
-    setTimeout(function () { mapPicker.invalidateSize(); }, 300);
-});
+    function stripRupiah(form) {
+        form.querySelectorAll('.input-rupiah').forEach(function(el) {
+            el.value = el.value.replace(/\./g, '');
+        });
+        return true;
+    }
 </script>
 @endpush

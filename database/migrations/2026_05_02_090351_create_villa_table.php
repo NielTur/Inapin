@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->integer('jumlah_kamar')->default(1);
             $table->integer('jumlah_kamar_mandi')->default(1);
             $table->enum('status', ['pending', 'disetujui', 'ditolak', 'nonaktif'])->default('pending');
+            $table->text('catatan_admin')->nullable();
             $table->boolean('tersedia')->default(true);
             $table->decimal('ulasan', 3, 1)->nullable();
             $table->text('alamat');

@@ -43,12 +43,17 @@ class VillaController extends Controller
             $query->where('jumlah_kamar', '>=', $request->kamar);
         }
 
+        // ← BARU: filter kecamatan
+        if ($request->filled('kecamatan')) {
+            $query->where('kecamatan', $request->kecamatan);
+        }
+
         $sort = $request->get('sort', 'terbaru');
         match ($sort) {
-            'harga_asc' => $query->orderBy('harga', 'asc'),
+            'harga_asc'  => $query->orderBy('harga', 'asc'),
             'harga_desc' => $query->orderBy('harga', 'desc'),
-            'rating' => $query->orderByDesc('ulasan'),
-            default => $query->latest(),
+            'rating'     => $query->orderByDesc('ulasan'),
+            default      => $query->latest(),
         };
 
         $villas = $query->paginate(9)->withQueryString();
@@ -58,16 +63,29 @@ class VillaController extends Controller
             ->selectRaw('kota, COUNT(*) as total')
             ->groupBy('kota')
             ->orderByDesc('total')
-            ->pluck('kota')
-            ->take(5);
+            ->pluck('kota');
 
-        $hargaMin = Villa::where('status', 'disetujui')->where('tersedia', true)->min('harga') ?? 0;
-        $hargaMax = Villa::where('status', 'disetujui')->where('tersedia', true)->max('harga') ?? 10000000;
+        // kecamatan list, hanya muncul kalau kota dipilih
+        $kecamatanList = collect();
+        if ($request->filled('kota')) {
+            $kecamatanList = Villa::where('status', 'disetujui')
+                ->where('tersedia', true)
+                ->where('kota', 'like', '%' . $request->kota . '%')
+                ->whereNotNull('kecamatan')
+                ->where('kecamatan', '!=', '')
+                ->distinct()
+                ->orderBy('kecamatan')
+                ->pluck('kecamatan');
+        }
+
+        $hargaMin   = Villa::where('status', 'disetujui')->where('tersedia', true)->min('harga') ?? 0;
+        $hargaMax   = Villa::where('status', 'disetujui')->where('tersedia', true)->max('harga') ?? 10000000;
         $totalVilla = Villa::where('status', 'disetujui')->where('tersedia', true)->count();
 
         return view('frontend.v_villa.index', compact(
             'villas',
             'kotaList',
+            'kecamatanList',
             'hargaMin',
             'hargaMax',
             'totalVilla',

@@ -15,6 +15,12 @@ class Pemesanan extends Model
     protected $fillable = [
         'id_villa',
         'id_customer',
+        'nama_tamu',
+        'email_tamu',
+        'no_hp_tamu',
+        'tipe_identitas',
+        'nomor_identitas',
+        'alamat_tamu',
         'metode_pembayaran',
         'tanggal_pemesanan',
         'status',

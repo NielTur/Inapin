@@ -126,14 +126,14 @@ class VillaController extends Controller
             'foto.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        // if ($request->filled('latitude') && $request->filled('longitude')) {
-        //     $coords = [
-        //         'latitude' => (float) $request->latitude,
-        //         'longitude' => (float) $request->longitude,
-        //     ];
-        // } else {
-        //     $coords = $this->geocodeAlamat($request);
-        // }
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $coords = [
+                'latitude' => (float) $request->latitude,
+                'longitude' => (float) $request->longitude,
+            ];
+        } else {
+            $coords = $this->geocodeAlamat($request);
+        }
 
         $villa = Villa::create([
             'id_owner' => Auth::id(),
@@ -143,8 +143,8 @@ class VillaController extends Controller
             'kelurahan' => $request->kelurahan,
             'kecamatan' => $request->kecamatan,
             'provinsi' => $request->provinsi,
-            // 'latitude' => $coords['latitude'],
-            // 'longitude' => $coords['longitude'],
+            'latitude' => $coords['latitude'],
+            'longitude' => $coords['longitude'],
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -216,14 +216,14 @@ class VillaController extends Controller
             'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // if ($request->filled('latitude') && $request->filled('longitude')) {
-        //     $coords = [
-        //         'latitude' => (float) $request->latitude,
-        //         'longitude' => (float) $request->longitude,
-        //     ];
-        // } else {
-        //     $coords = $this->geocodeAlamat($request);
-        // }
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $coords = [
+                'latitude' => (float) $request->latitude,
+                'longitude' => (float) $request->longitude,
+            ];
+        } else {
+            $coords = $this->geocodeAlamat($request);
+        }
 
         $villa->update([
             'nama_villa' => $request->nama_villa,
@@ -232,8 +232,8 @@ class VillaController extends Controller
             'kelurahan' => $request->kelurahan,
             'kecamatan' => $request->kecamatan,
             'provinsi' => $request->provinsi,
-            // 'latitude' => $coords['latitude'],
-            // 'longitude' => $coords['longitude'],
+            'latitude' => $coords['latitude'],
+            'longitude' => $coords['longitude'],
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -290,5 +290,20 @@ class VillaController extends Controller
 
         return redirect()->route('owner.villa.index')
             ->with('success', 'Villa berhasil dihapus.');
+    }
+
+    public function destroyFoto($id_dokumen_villa): RedirectResponse
+    {
+        $dokumen = DokumenVilla::where('id_dokumen_villa', $id_dokumen_villa)
+            ->where('id_owner', Auth::id())
+            ->firstOrFail();
+
+        if (Storage::disk('public')->exists($dokumen->file_path)) {
+            Storage::disk('public')->delete($dokumen->file_path);
+        }
+
+        $dokumen->delete();
+
+        return back()->with('success', 'Foto berhasil dihapus.');
     }
 }

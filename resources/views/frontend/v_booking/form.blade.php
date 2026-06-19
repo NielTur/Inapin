@@ -39,21 +39,27 @@
                         <h5 class="fw-bold mb-4">
                             <i class="fa fa-user text-primary me-2"></i> Data Pemesan
                         </h5>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="pesanUntukSaya" checked onchange="togglePemesananData()">
+                            <label class="form-check-label" for="pesanUntukSaya">
+                                Pemesanan ini untuk saya sendiri
+                            </label>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nama Lengkap</label>
-                                <input type="text" class="form-control bg-white"
-                                    value="{{ Auth::user()->nama }}" readonly>
+                                <label class="form-label fw-semibold">Nama Lengkap Tamu</label>
+                                <input type="text" name="nama_tamu" id="namaTamu" class="form-control bg-white"
+                                    value="{{ Auth::user()->nama }}" readonly required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Email</label>
-                                <input type="text" class="form-control bg-white"
+                                <label class="form-label fw-semibold">Email Tamu</label>
+                                <input type="email" name="email_tamu" id="emailTamu" class="form-control bg-white"
                                     value="{{ Auth::user()->email }}" readonly>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">No. Handphone</label>
-                                <input type="text" class="form-control bg-white"
-                                    value="{{ Auth::user()->phone ?? '-' }}" readonly>
+                                <label class="form-label fw-semibold">No. Handphone Tamu</label>
+                                <input type="text" name="no_hp_tamu" id="noHpTamu" class="form-control bg-white"
+                                    value="{{ Auth::user()->phone ?? '' }}" readonly>
                             </div>
                         </div>
                         <small class="text-muted mt-2 d-block">
@@ -142,14 +148,6 @@
                             Rp {{ number_format($total, 0, ',', '.') }}
                         </span>
                     </div>
-
-                    <div class="mt-3 bg-white rounded p-3">
-                        <small class="text-muted">
-                            <i class="fa fa-info-circle text-primary me-1"></i>
-                            Metode pembayaran dipilih di langkah berikutnya melalui Midtrans.
-                        </small>
-                    </div>
-
                 </div>
             </div>
 
@@ -164,16 +162,16 @@
     var hargaPerMalam = parseInt(document.getElementById('hargaPerMalam').value);
 
     function hitungUlang() {
-        var checkin  = document.getElementById('inputCheckin').value;
+        var checkin = document.getElementById('inputCheckin').value;
         var checkout = document.getElementById('inputCheckout').value;
 
         if (checkin && checkout) {
             var malam = Math.floor((new Date(checkout) - new Date(checkin)) / 86400000);
             if (malam > 0) {
                 var total = malam * hargaPerMalam;
-                document.getElementById('jumlahMalam').value              = malam + ' malam';
-                document.getElementById('ringkasanMalam').textContent     = malam + ' malam';
-                document.getElementById('ringkasanTotal').textContent     =
+                document.getElementById('jumlahMalam').value = malam + ' malam';
+                document.getElementById('ringkasanMalam').textContent = malam + ' malam';
+                document.getElementById('ringkasanTotal').textContent =
                     'Rp ' + total.toLocaleString('id-ID');
             }
         }
@@ -181,5 +179,32 @@
 
     document.getElementById('inputCheckin').addEventListener('change', hitungUlang);
     document.getElementById('inputCheckout').addEventListener('change', hitungUlang);
+
+    function togglePemesananData() {
+        var isChecked = document.getElementById('pesanUntukSaya').checked;
+        var namaTamu = document.getElementById('namaTamu');
+        var emailTamu = document.getElementById('emailTamu');
+        var noHpTamu = document.getElementById('noHpTamu');
+
+        if (isChecked) {
+            namaTamu.value = "{{ Auth::user()->nama }}";
+            emailTamu.value = "{{ Auth::user()->email }}";
+            noHpTamu.value = "{{ Auth::user()->phone ?? '' }}";
+
+            namaTamu.setAttribute('readonly', true);
+            emailTamu.setAttribute('readonly', true);
+            noHpTamu.setAttribute('readonly', true);
+        } else {
+            namaTamu.value = "";
+            emailTamu.value = "";
+            noHpTamu.value = "";
+
+            namaTamu.removeAttribute('readonly');
+            emailTamu.removeAttribute('readonly');
+            noHpTamu.removeAttribute('readonly');
+
+            namaTamu.focus();
+        }
+    }
 </script>
 @endpush

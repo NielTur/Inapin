@@ -21,6 +21,7 @@
         overflow: visible !important;
     }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 @endpush
 
 @push('scripts')
@@ -106,6 +107,29 @@
         }
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+<script>
+    flatpickr(".daterange", {
+        mode: "range",
+        minDate: "today",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d M Y",
+        locale: "id",
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                var start = flatpickr.formatDate(selectedDates[0], "Y-m-d");
+                var end = flatpickr.formatDate(selectedDates[1], "Y-m-d");
+                document.getElementById('inputCheckinReal').value = start;
+                document.getElementById('inputCheckoutReal').value = end;
+            } else {
+                document.getElementById('inputCheckinReal').value = '';
+                document.getElementById('inputCheckoutReal').value = '';
+            }
+        }
+    });
+</script>
 @endpush
 
 
@@ -161,23 +185,19 @@
                     </div>
                 </div>
 
-                {{-- Check-in --}}
-                <div class="col-md-2">
-                    <div class="bg-white rounded px-3 py-2 h-100">
-                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Check-in</small>
-                        <input type="date" name="checkin" class="form-control border-0 p-0 fw-semibold"
-                            value="{{ request('checkin') }}"
-                            style="font-size:14px; box-shadow:none;">
-                    </div>
-                </div>
-
-                {{-- Check-out --}}
-                <div class="col-md-2">
-                    <div class="bg-white rounded px-3 py-2 h-100">
-                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Check-out</small>
-                        <input type="date" name="checkout" class="form-control border-0 p-0 fw-semibold"
-                            value="{{ request('checkout') }}"
-                            style="font-size:14px; box-shadow:none;">
+                {{-- Tanggal Menginap --}}
+                <div class="col-md-4">
+                    <div class="bg-white rounded px-3 py-2 h-100 position-relative">
+                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Tanggal Menginap</small>
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-calendar-alt text-muted me-2" style="font-size:14px;"></i>
+                            <input type="text" class="daterange form-control border-0 p-0 fw-semibold bg-white"
+                                placeholder="Pilih tanggal..."
+                                value="{{ request('checkin') && request('checkout') ? request('checkin').' to '.request('checkout') : '' }}"
+                                style="font-size:14px; box-shadow:none; cursor:pointer;" readonly>
+                        </div>
+                        <input type="hidden" name="checkin" id="inputCheckinReal" value="{{ request('checkin') }}">
+                        <input type="hidden" name="checkout" id="inputCheckoutReal" value="{{ request('checkout') }}">
                     </div>
                 </div>
 

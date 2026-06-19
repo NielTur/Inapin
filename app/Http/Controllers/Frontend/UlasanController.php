@@ -28,11 +28,12 @@ class UlasanController extends Controller
         $idCustomer = Auth::id();
 
         // Cek apakah tamu punya pemesanan yang sudah checkout di villa ini
+
         $bolehRating = Pemesanan::where('id_customer', $idCustomer)
             ->where('id_villa', $idVilla)
-            ->whereIn('status', ['dikonfirmasi', 'selesai'])
+            ->where('status', 'checked_out')
             ->whereHas('detailPemesanan', function ($q) {
-                $q->where('tanggal_checkout', '<', now()->toDateString());
+                $q->where('tanggal_checkout', '<=', now()->toDateString());
             })
             ->exists();
 

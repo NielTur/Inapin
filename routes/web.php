@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 // ===================================================================
 Route::prefix('')->group(function () {
 
+    Route::redirect('/', '/beranda');
     // PUBLIC
     Route::get('/beranda', [BerandaController::class, 'index'])->name('beranda');
     Route::get('/villa', [VillaController::class, 'index'])->name('villa.index');
@@ -82,9 +83,14 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/villa', [OwnerVillaController::class, 'store'])->name('villa.store');
         Route::get('/villa/{id}/edit', [OwnerVillaController::class, 'edit'])->name('villa.edit');
         Route::put('/villa/{id}', [OwnerVillaController::class, 'update'])->name('villa.update');
+        Route::delete('/villa/foto/{id_dokumen_villa}', [OwnerVillaController::class, 'destroyFoto'])->name('villa.foto.destroy');
         Route::delete('/villa/{id}', [OwnerVillaController::class, 'destroy'])->name('villa.destroy');
 
         Route::get('/pesanan', [OwnerPesananController::class, 'index'])->name('pesanan.index');
+        Route::get('/pesanan/create', [OwnerPesananController::class, 'create'])->name('pesanan.create');
+        Route::post('/pesanan', [OwnerPesananController::class, 'store'])->name('pesanan.store');
+        Route::get('/pesanan/bayar-snap/{id}', [OwnerPesananController::class, 'bayarSnap'])->name('pesanan.bayarSnap');
+        Route::delete('/pesanan/{id}/batal', [OwnerPesananController::class, 'batal'])->name('pesanan.batal');
         Route::patch('/pesanan/{id}/checkin', [OwnerPesananController::class, 'checkin'])->name('pesanan.checkin');
         Route::patch('/pesanan/{id}/checkout', [OwnerPesananController::class, 'checkout'])->name('pesanan.checkout');
     });

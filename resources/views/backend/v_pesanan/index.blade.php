@@ -36,11 +36,12 @@
                     <td>Rp {{ $detail ? number_format($detail->sub_total, 0, ',', '.') : '-' }}</td>
                     <td>
                         @php
-                            $badge = ['menunggu'=>'warning','dikonfirmasi'=>'success','ditolak'=>'danger','dibatalkan'=>'secondary','selesai'=>'info'];
-                            $status = $p->status ?? 'menunggu';
+                        $badge = ['menunggu'=>'warning','dibayar'=>'success','checked_in'=>'primary','checked_out'=>'info','dibatalkan'=>'secondary'];
+                        $label = ['menunggu'=>'Menunggu','dibayar'=>'Dibayar','checked_in'=>'Menginap','checked_out'=>'Selesai','dibatalkan'=>'Dibatalkan'];
+                        $status = $p->status ?? 'menunggu';
                         @endphp
                         <span class="badge bg-{{ $badge[$status] ?? 'secondary' }}">
-                            {{ ucfirst($status) }}
+                            {{ $label[$status] ?? ucfirst($status) }}
                         </span>
                     </td>
                 </tr>

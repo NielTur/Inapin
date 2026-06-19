@@ -7,7 +7,7 @@
 
     {{-- Gambar Villa --}}
     <div class="position-relative overflow-hidden">
-        <a href="{{ route('villa.detail', $villa->id_villa) }}">
+        <a href="{{ route('villa.detail', array_merge(['id' => $villa->id_villa], array_filter(request()->only(['checkin', 'checkout'])))) }}">
             @if($villa->dokumenVilla && $villa->dokumenVilla->where('status', 'disetujui')->first())
             <img class="img-fluid w-100"
                 src="{{ asset('storage/' . $villa->dokumenVilla->where('status', 'disetujui')->first()->file_path) }}"
@@ -37,7 +37,7 @@
             <small class="text-muted fs-6 fw-normal">/ malam</small>
         </h5>
         <a class="d-block h5 mb-2 text-decoration-none text-dark"
-            href="{{ route('villa.detail', $villa->id_villa) }}">
+            href="{{ route('villa.detail', array_merge(['id' => $villa->id_villa], array_filter(request()->only(['checkin', 'checkout'])))) }}">
             {{ $villa->nama_villa }}
         </a>
         <p class="text-muted mb-0">

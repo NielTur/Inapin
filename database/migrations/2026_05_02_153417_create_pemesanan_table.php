@@ -12,6 +12,12 @@ return new class extends Migration
             $table->id('id_pemesanan');
             $table->unsignedBigInteger('id_villa');
             $table->unsignedBigInteger('id_customer');
+            $table->string('nama_tamu')->nullable();
+            $table->string('email_tamu')->nullable();
+            $table->string('no_hp_tamu')->nullable();
+            $table->string('tipe_identitas')->nullable();
+            $table->string('nomor_identitas')->nullable();
+            $table->string('alamat_tamu')->nullable();
             $table->string('metode_pembayaran');
             $table->datetime('tanggal_pemesanan');
             $table->enum('status', ['menunggu', 'dibayar', 'checked_in', 'checked_out', 'dibatalkan'])

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -35,36 +36,53 @@ class BookingController extends Controller
     {
         $request->validate(
             [
-                'id_villa' => 'required|exists:villa,id_villa',
-                'tanggal_checkin' => 'required|date|after_or_equal:today',
+                'id_villa' => [
+                    'required',
+                    Rule::exists('villa', 'id_villa')
+                        ->where('status', 'disetujui')
+                        ->where('tersedia', true),
+                ],
+                'tanggal_checkin'  => 'required|date|after_or_equal:today',
                 'tanggal_checkout' => 'required|date|after:tanggal_checkin',
+                'nama_tamu'        => 'required|string|max:255',
+                'email_tamu'       => 'nullable|email|max:255',
+                'no_hp_tamu'       => 'nullable|string|max:20',
             ],
             [
+                'id_villa.exists'                => 'Villa tidak tersedia untuk dipesan.',
                 'tanggal_checkin.after_or_equal' => 'Tanggal check-in tidak boleh sebelum hari ini.',
-                'tanggal_checkout.after' => 'Tanggal check-out harus setelah check-in.',
+                'tanggal_checkout.after'         => 'Tanggal check-out harus setelah check-in.',
+                'nama_tamu.required'             => 'Nama tamu wajib diisi.',
             ]
         );
 
-        $villa = Villa::findOrFail($request->id_villa);
+        $villa = Villa::where('id_villa', $request->id_villa)
+            ->where('status', 'disetujui')
+            ->where('tersedia', true)
+            ->firstOrFail();
+
         $malam = (int) ((strtotime($request->tanggal_checkout) - strtotime($request->tanggal_checkin)) / 86400);
         $total = $malam * $villa->harga;
 
         $pemesanan = Pemesanan::create([
-            'id_villa' => $villa->id_villa,
-            'id_customer' => Auth::id(),
+            'id_villa'          => $villa->id_villa,
+            'id_customer'       => Auth::id(),
+            'nama_tamu'         => $request->nama_tamu,
+            'email_tamu'        => $request->email_tamu,
+            'no_hp_tamu'        => $request->no_hp_tamu,
             'metode_pembayaran' => 'midtrans',
             'tanggal_pemesanan' => now(),
-            'expires_at' => now()->addMinutes(config('app.booking_payment_timeout', 30)),
+            'expires_at'        => now()->addMinutes(config('app.booking_payment_timeout', 30)),
         ]);
 
         $villa->update(['tersedia' => false]);
 
         DetailPemesanan::create([
-            'id_pemesanan' => $pemesanan->id_pemesanan,
+            'id_pemesanan'    => $pemesanan->id_pemesanan,
             'tanggal_checkin' => $request->tanggal_checkin,
             'tanggal_checkout' => $request->tanggal_checkout,
-            'harga_default' => $villa->harga,
-            'sub_total' => $total,
+            'harga_default'   => $villa->harga,
+            'sub_total'       => $total,
         ]);
 
         return redirect()->route('booking.bayar', $pemesanan->id_pemesanan);
@@ -104,9 +122,9 @@ class BookingController extends Controller
                 'gross_amount' => (int) $detail->sub_total,
             ],
             'customer_details' => [
-                'first_name' => $pemesanan->customer->nama,
-                'email' => $pemesanan->customer->email,
-                'phone' => $pemesanan->customer->phone ?? '',
+                'first_name' => $pemesanan->nama_tamu ?? $pemesanan->customer->nama,
+                'email' => $pemesanan->email_tamu ?? $pemesanan->customer->email,
+                'phone' => $pemesanan->no_hp_tamu ?? $pemesanan->customer->phone ?? '',
             ],
             'item_details' => [
                 [

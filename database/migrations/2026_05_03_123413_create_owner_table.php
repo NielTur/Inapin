@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->string('nik', 16)->nullable();
             $table->date('tanggal_lahir')->nullable();
+            $table->string('foto')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
