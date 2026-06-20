@@ -157,7 +157,7 @@
                             @error('tanggal_lahir')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- NIK — khusus owner, bukan customer --}}
+                        {{-- NIK — khusus owner --}}
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">
                                 NIK
@@ -190,7 +190,6 @@
                             <i class="fa fa-lock" style="font-size:11px;"></i>
                         </span>
                         Ganti Password
-                        <span class="text-muted fw-normal small">(opsional)</span>
                     </h6>
 
                     <div class="row g-3">
@@ -198,7 +197,7 @@
                             <label class="form-label fw-semibold small">Password Lama</label>
                             <input type="password" name="password_lama"
                                 class="form-control rounded-3"
-                                placeholder="Wajib diisi jika ganti password">
+                                placeholder="">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Password Baru</label>
