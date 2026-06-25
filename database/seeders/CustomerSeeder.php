@@ -6,21 +6,20 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class DatabaseSeeder extends Seeder
+class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([OwnerSeeder::class]);
-        $this->call([VillaSeeder::class]);
-        $this->call([CustomerSeeder::class]);
-
-        // Admin
-        DB::table('admin')->insert([
-            'nama' => 'Super Admin',
-            'email' => 'admin@inapin.com',
+        DB::table('customer')->insert([
+            'nama' => 'user',
+            'email' => 'user@gmail.com',
             'password' => Hash::make('12345678'),
+            'phone' => '08888888881',
+            'tanggal_lahir' => '2000-10-09',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $this->command->info('CustomerSeeder: Berhasil dibuat');
     }
 }
