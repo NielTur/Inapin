@@ -3,6 +3,23 @@
 @section('title', 'Pesanan Manual - Panel Owner')
 @section('page-title', 'Buat Pesanan Manual')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Flatpickr: Tanggal yang sudah di-booking (merah/disabled) */
+    .flatpickr-day.booked-date {
+        background: #fee2e2 !important;
+        color: #dc3545 !important;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .flatpickr-day.booked-date:hover {
+        background: #fca5a5 !important;
+        color: #dc3545 !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="row">
     <div class="col-lg-8">
@@ -15,7 +32,7 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Pilih Villa</label>
-                    <select name="id_villa" class="form-select @error('id_villa') is-invalid @enderror" required>
+                    <select name="id_villa" id="selectVilla" class="form-select @error('id_villa') is-invalid @enderror" required>
                         <option value="">-- Pilih Villa Tersedia --</option>
                         @foreach($villas as $villa)
                         <option value="{{ $villa->id_villa }}" data-harga="{{ $villa->harga }}">{{ $villa->nama_villa }} - Rp {{ number_format($villa->harga, 0, ',', '.') }}/malam</option>
@@ -27,12 +44,12 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tanggal Check-in</label>
-                        <input type="date" name="tanggal_checkin" id="inputCheckin" class="form-control @error('tanggal_checkin') is-invalid @enderror" value="{{ old('tanggal_checkin', date('Y-m-d')) }}" min="{{ date('Y-m-d') }}" required>
+                        <input type="text" name="tanggal_checkin" id="inputCheckin" class="form-control @error('tanggal_checkin') is-invalid @enderror" value="{{ old('tanggal_checkin', date('Y-m-d')) }}" placeholder="Pilih tanggal" required readonly>
                         @error('tanggal_checkin') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tanggal Check-out</label>
-                        <input type="date" name="tanggal_checkout" id="inputCheckout" class="form-control @error('tanggal_checkout') is-invalid @enderror" value="{{ old('tanggal_checkout', date('Y-m-d', strtotime('+1 day'))) }}" min="{{ date('Y-m-d') }}" required>
+                        <input type="text" name="tanggal_checkout" id="inputCheckout" class="form-control @error('tanggal_checkout') is-invalid @enderror" value="{{ old('tanggal_checkout', date('Y-m-d', strtotime('+1 day'))) }}" placeholder="Pilih tanggal" required readonly>
                         @error('tanggal_checkout') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -137,21 +154,91 @@
     @endsection
 
     @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
     <script>
-        const selectVilla = document.querySelector('select[name="id_villa"]');
+        // Data booked dates per villa (dari server)
+        var villaBookedDates = @json($villaBookedDates ?? {});
+        var currentBookedDates = [];
+
+        const selectVilla = document.getElementById('selectVilla');
         const inputCheckin = document.getElementById('inputCheckin');
         const inputCheckout = document.getElementById('inputCheckout');
         const textTotal = document.getElementById('textTotal');
 
-        function hitungTotal() {
-            const checkin = new Date(inputCheckin.value);
-            const checkout = new Date(inputCheckout.value);
+        // Init Flatpickr
+        var fpCheckoutOwner = null;
+        var fpCheckinOwner = flatpickr('#inputCheckin', {
+            locale: 'id',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            defaultDate: '{{ old("tanggal_checkin", date("Y-m-d")) }}',
+            disable: [],
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (currentBookedDates.indexOf(dateStr) !== -1) {
+                    dayElem.classList.add('booked-date');
+                    dayElem.title = 'Sudah dipesan';
+                }
+            },
+            onChange: function(selectedDates) {
+                if (selectedDates.length > 0) {
+                    var nextDay = new Date(selectedDates[0]);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    fpCheckoutOwner.set('minDate', nextDay);
+                }
+                hitungTotal();
+            }
+        });
 
-            let malam = (checkout - checkin) / (1000 * 60 * 60 * 24);
+        fpCheckoutOwner = flatpickr('#inputCheckout', {
+            locale: 'id',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            defaultDate: '{{ old("tanggal_checkout", date("Y-m-d", strtotime("+1 day"))) }}',
+            disable: [],
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (currentBookedDates.indexOf(dateStr) !== -1) {
+                    dayElem.classList.add('booked-date');
+                    dayElem.title = 'Sudah dipesan';
+                }
+            },
+            onChange: function() {
+                hitungTotal();
+            }
+        });
+
+        // Saat villa dipilih, update booked dates di Flatpickr
+        selectVilla.addEventListener('change', function() {
+            var villaId = this.value;
+            currentBookedDates = villaId && villaBookedDates[villaId] ? villaBookedDates[villaId] : [];
+
+            // Update disable dates pada kedua picker
+            fpCheckinOwner.set('disable', currentBookedDates);
+            fpCheckoutOwner.set('disable', currentBookedDates);
+
+            // Clear selected dates
+            fpCheckinOwner.clear();
+            fpCheckoutOwner.clear();
+
+            hitungTotal();
+        });
+
+        function hitungTotal() {
+            var checkin = inputCheckin.value;
+            var checkout = inputCheckout.value;
+
+            if (!checkin || !checkout) {
+                textTotal.innerText = 'Rp 0';
+                return;
+            }
+
+            var malam = Math.floor((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
             if (malam < 1 || isNaN(malam)) malam = 1;
 
             const option = selectVilla.options[selectVilla.selectedIndex];
-            let harga = 0;
+            var harga = 0;
             if (option && option.value !== "") {
                 harga = parseFloat(option.getAttribute('data-harga'));
             }
@@ -163,9 +250,5 @@
                 maximumFractionDigits: 0
             }).format(total);
         }
-
-        selectVilla.addEventListener('change', hitungTotal);
-        inputCheckin.addEventListener('change', hitungTotal);
-        inputCheckout.addEventListener('change', hitungTotal);
     </script>
-    @endpush
+    @endpush

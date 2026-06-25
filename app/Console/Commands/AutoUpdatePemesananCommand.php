@@ -16,12 +16,10 @@ class AutoUpdatePemesananCommand extends Command
         $expired = Pemesanan::where('status', 'menunggu')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
-            ->with('villa')
             ->get();
 
         foreach ($expired as $p) {
             $p->update(['status' => 'dibatalkan']);
-            $p->villa?->update(['tersedia' => true]);
         }
         $this->info("Expired payment: {$expired->count()} pemesanan dibatalkan.");
 
@@ -32,12 +30,10 @@ class AutoUpdatePemesananCommand extends Command
                 fn($q) =>
                 $q->where('tanggal_checkin', '<=', now()->subDay()->toDateString())
             )
-            ->with('villa')
             ->get();
 
         foreach ($noShow as $p) {
             $p->update(['status' => 'checked_out']);
-            $p->villa?->update(['tersedia' => true]);
         }
         $this->info("No-show: {$noShow->count()} pemesanan di-checkout otomatis.");
 
@@ -48,12 +44,10 @@ class AutoUpdatePemesananCommand extends Command
                 fn($q) =>
                 $q->where('tanggal_checkout', '<', now()->toDateString())
             )
-            ->with('villa')
             ->get();
 
         foreach ($autoCheckout as $p) {
             $p->update(['status' => 'checked_out']);
-            $p->villa?->update(['tersedia' => true]);
         }
         $this->info("Auto checkout: {$autoCheckout->count()} pemesanan di-checkout otomatis.");
     }

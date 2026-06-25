@@ -40,7 +40,6 @@ class PembayaranController extends Controller
             ]);
         } elseif (in_array($request->transaction_status, ['cancel', 'deny', 'expire'])) {
             $pemesanan->update(['status' => 'dibatalkan']);
-            $pemesanan->villa->update(['tersedia' => true]);
         }
 
         return response()->json(['message' => 'OK']);

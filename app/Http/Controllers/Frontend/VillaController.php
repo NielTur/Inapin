@@ -11,9 +11,24 @@ class VillaController extends Controller
 {
     public function index(Request $request): View
     {
+        $searchCheckin      = $request->filled('checkin')  ? $request->checkin  : null;
+        $searchCheckout     = $request->filled('checkout') ? $request->checkout : null;
+        $searchHasTanggal   = $searchCheckin && $searchCheckout;
+
         $query = Villa::where('status', 'disetujui')
             ->where('tersedia', true)
             ->with(['fasilitasVilla', 'dokumenVilla', 'owner']);
+
+        // Tambah flag is_booked jika customer search dengan filter tanggal
+        if ($searchHasTanggal) {
+            $query->withExists(['pemesanan as is_booked' => function ($q) use ($searchCheckin, $searchCheckout) {
+                $q->whereIn('status', ['menunggu', 'dibayar', 'checked_in'])
+                  ->whereHas('detailPemesanan', function ($sq) use ($searchCheckin, $searchCheckout) {
+                      $sq->where('tanggal_checkin', '<', $searchCheckout)
+                         ->where('tanggal_checkout', '>', $searchCheckin);
+                  });
+            }]);
+        }
 
         if ($request->filled('kota')) {
             $query->where(function ($q) use ($request) {
@@ -89,17 +104,31 @@ class VillaController extends Controller
             'hargaMin',
             'hargaMax',
             'totalVilla',
-            'sort'
+            'sort',
+            'searchHasTanggal'
         ));
     }
 
-    public function detail($id): View
+    public function detail($id, Request $request): View
     {
         $villa = Villa::where('id_villa', $id)
             ->where('status', 'disetujui')
             ->with(['fasilitasVilla', 'dokumenVilla'])
             ->firstOrFail();
 
-        return view('frontend.v_villa.detail', compact('villa'));
+        $bookedDates = $villa->getBookedDates();
+
+        // Flow 2: Cek overlap jika customer masuk dari search dengan filter tanggal
+        $isFullyBooked  = false;
+        $searchCheckin  = $request->query('checkin');
+        $searchCheckout = $request->query('checkout');
+
+        if ($searchCheckin && $searchCheckout) {
+            $isFullyBooked = $villa->isBookedBetween($searchCheckin, $searchCheckout);
+        }
+
+        return view('frontend.v_villa.detail', compact(
+            'villa', 'bookedDates', 'isFullyBooked', 'searchCheckin', 'searchCheckout'
+        ));
     }
 }

@@ -53,7 +53,6 @@ class PesananController extends Controller
             ->firstOrFail();
 
         $pemesanan->update(['status' => 'checked_out']);
-        $pemesanan->villa->update(['tersedia' => true]);
 
         return back()->with('success', 'Check-out tamu berhasil dikonfirmasi!');
     }
@@ -62,9 +61,15 @@ class PesananController extends Controller
     {
         $villas = Villa::where('id_owner', Auth::id())
             ->where('status', 'disetujui')
-            ->where('tersedia', true)
             ->get();
-        return view('owner.v_pesanan.create', compact('villas'));
+
+        // Kumpulkan booked dates per villa untuk Flatpickr
+        $villaBookedDates = [];
+        foreach ($villas as $villa) {
+            $villaBookedDates[$villa->id_villa] = $villa->getBookedDates();
+        }
+
+        return view('owner.v_pesanan.create', compact('villas', 'villaBookedDates'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -74,8 +79,7 @@ class PesananController extends Controller
                 'required',
                 Rule::exists('villa', 'id_villa')
                     ->where('id_owner', Auth::id())
-                    ->where('status', 'disetujui')
-                    ->where('tersedia', true),
+                    ->where('status', 'disetujui'),
             ],
             'tanggal_checkin'  => 'required|date|after_or_equal:today',
             'tanggal_checkout' => 'required|date|after:tanggal_checkin',
@@ -91,8 +95,12 @@ class PesananController extends Controller
         $villa = Villa::where('id_villa', $request->id_villa)
             ->where('id_owner', Auth::id())
             ->where('status', 'disetujui')
-            ->where('tersedia', true)
             ->firstOrFail();
+
+        // Cek overlap tanggal dengan pemesanan aktif
+        if ($villa->isBookedBetween($request->tanggal_checkin, $request->tanggal_checkout)) {
+            return back()->withErrors(['tanggal_checkin' => 'Villa sudah dipesan pada tanggal yang dipilih. Silakan pilih tanggal lain.'])->withInput();
+        }
 
         if ($request->email_tamu) {
             $walkInCustomer = Customer::where('email', $request->email_tamu)->first();
@@ -131,7 +139,6 @@ class PesananController extends Controller
             'expires_at'        => $request->metode_pembayaran === 'tunai' ? null : now()->addMinutes(config('app.booking_payment_timeout', 30)),
         ]);
 
-        $villa->update(['tersedia' => false]);
 
         DetailPemesanan::create([
             'id_pemesanan'    => $pemesanan->id_pemesanan,
@@ -161,7 +168,6 @@ class PesananController extends Controller
 
         if ($pemesanan->expires_at && $pemesanan->expires_at->isPast()) {
             $pemesanan->update(['status' => 'dibatalkan']);
-            $pemesanan->villa->update(['tersedia' => true]);
             return redirect()->route('owner.pesanan.index')
                 ->with('error', 'Waktu pembayaran habis. Pemesanan otomatis dibatalkan.');
         }
@@ -206,7 +212,6 @@ class PesananController extends Controller
             ->firstOrFail();
 
         $pemesanan->update(['status' => 'dibatalkan']);
-        $pemesanan->villa->update(['tersedia' => true]);
 
         return redirect()->route('owner.pesanan.index')
             ->with('success', 'Pesanan berhasil dibatalkan.');

@@ -5,6 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     #peta-villa {
         height: 350px;
@@ -46,6 +47,18 @@
     .sosmed-btn:hover {
         opacity: .8;
         transform: scale(1.1);
+    }
+
+    /* Flatpickr: Tanggal yang sudah di-booking (merah/disabled) */
+    .flatpickr-day.booked-date {
+        background: #fee2e2 !important;
+        color: #dc3545 !important;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .flatpickr-day.booked-date:hover {
+        background: #fca5a5 !important;
+        color: #dc3545 !important;
     }
 </style>
 @endpush
@@ -375,6 +388,36 @@
 
                 <div class="bg-light rounded p-4 mb-4 wow fadeInUp sticky-top" data-wow-delay="0.1s" style="top:80px;">
 
+                    @if($isFullyBooked)
+                    {{-- ===== STATUS: VILLA HABIS! (Flow 2 — tanggal sudah terbooking) ===== --}}
+                    <div class="text-center py-3">
+                        <div class="mb-3" style="font-size: 52px; line-height:1;">🚫</div>
+                        <h4 class="fw-bold text-danger mb-2">Villa Habis!</h4>
+                        <p class="text-muted mb-1" style="font-size: 0.9rem;">
+                            Villa ini sudah terbooking untuk tanggal:
+                        </p>
+                        <p class="fw-semibold mb-4" style="font-size: 0.9rem;">
+                            {{ \Carbon\Carbon::parse($searchCheckin)->translatedFormat('d M Y') }}
+                            &nbsp;→&nbsp;
+                            {{ \Carbon\Carbon::parse($searchCheckout)->translatedFormat('d M Y') }}
+                        </p>
+                        <p class="text-muted small mb-4">
+                            Silahkan pilih tanggal lain atau cari villa tersedia di sekitar area ini.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('villa.detail', $villa->id_villa) }}"
+                               class="btn btn-outline-primary py-2 fw-semibold">
+                                <i class="fa fa-calendar-alt me-2"></i> Ubah Tanggal
+                            </a>
+                            <a href="{{ route('villa.index', array_filter(['kota' => $villa->kota, 'checkin' => $searchCheckin, 'checkout' => $searchCheckout])) }}"
+                               class="btn btn-primary py-2 fw-semibold">
+                                <i class="fa fa-search me-2"></i> Lihat Villa Lain
+                            </a>
+                        </div>
+                    </div>
+
+                    @else
+                    {{-- ===== FLOW 1 / NORMAL: Booking Form ===== --}}
                     <div class="mb-4">
                         <h3 class="text-primary fw-bold mb-1">
                             Rp {{ number_format($villa->harga, 0, ',', '.') }}
@@ -397,15 +440,13 @@
                     <form action="{{ route('booking.form', $villa->id_villa) }}" method="GET">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Check-in</label>
-                            <input type="date" name="checkin" class="form-control"
-                                min="{{ date('Y-m-d') }}"
-                                value="{{ request('checkin') }}" required>
+                            <input type="text" name="checkin" id="fpCheckin" class="form-control"
+                                value="{{ request('checkin') }}" placeholder="Pilih tanggal" required readonly>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Check-out</label>
-                            <input type="date" name="checkout" class="form-control"
-                                min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                value="{{ request('checkout') }}" required>
+                            <input type="text" name="checkout" id="fpCheckout" class="form-control"
+                                value="{{ request('checkout') }}" placeholder="Pilih tanggal" required readonly>
                         </div>
 
                         <div class="bg-white rounded p-3 mb-4">
@@ -432,6 +473,7 @@
                         </p>
                         @endauth
                     </form>
+                    @endif
 
                     <hr>
 
@@ -441,6 +483,7 @@
                     </div>
 
                 </div>
+
             </div>
             {{-- end col-lg-4 --}}
 
@@ -452,6 +495,8 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -461,6 +506,50 @@
         var kotaVilla = document.getElementById('kotaVilla').value;
         var villaLat = parseFloat(document.getElementById('villaLat').value) || 0;
         var villaLng = parseFloat(document.getElementById('villaLng').value) || 0;
+
+        // ===== BOOKED DATES (dari server) =====
+        var bookedDates = @json($bookedDates ?? []);
+
+        // ===== FLATPICKR: CHECK-IN & CHECK-OUT =====
+        var fpCheckout = null;
+        var fpCheckin = flatpickr('#fpCheckin', {
+            locale: 'id',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            disable: bookedDates,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (bookedDates.indexOf(dateStr) !== -1) {
+                    dayElem.classList.add('booked-date');
+                    dayElem.title = 'Sudah dipesan';
+                }
+            },
+            onChange: function(selectedDates) {
+                if (selectedDates.length > 0) {
+                    var nextDay = new Date(selectedDates[0]);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    fpCheckout.set('minDate', nextDay);
+                }
+                hitungTotal();
+            }
+        });
+
+        fpCheckout = flatpickr('#fpCheckout', {
+            locale: 'id',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            disable: bookedDates,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+                if (bookedDates.indexOf(dateStr) !== -1) {
+                    dayElem.classList.add('booked-date');
+                    dayElem.title = 'Sudah dipesan';
+                }
+            },
+            onChange: function() {
+                hitungTotal();
+            }
+        });
 
         // ===== INIT MAP =====
         var map = L.map('peta-villa');
@@ -596,8 +685,8 @@
 
         // ===== HITUNG TOTAL BOOKING =====
         function hitungTotal() {
-            var checkin = document.querySelector('input[name="checkin"]')?.value;
-            var checkout = document.querySelector('input[name="checkout"]')?.value;
+            var checkin = document.getElementById('fpCheckin').value;
+            var checkout = document.getElementById('fpCheckout').value;
             var harga = parseInt(document.getElementById('hargaVilla').value);
             if (checkin && checkout) {
                 var malam = Math.floor((new Date(checkout) - new Date(checkin)) / 86400000);
@@ -607,10 +696,6 @@
                 }
             }
         }
-        var ci = document.querySelector('input[name="checkin"]');
-        var co = document.querySelector('input[name="checkout"]');
-        if (ci) ci.addEventListener('change', hitungTotal);
-        if (co) co.addEventListener('change', hitungTotal);
 
         // ===== RATING BINTANG =====
         var selectedRating = 0;

@@ -105,11 +105,11 @@
                                 <td>Rp {{ $detail ? number_format($detail->sub_total, 0, ',', '.') : '-' }}</td>
                                 <td>
                                     @php
-                                    $badge = ['menunggu'=>'warning','dibayar'=>'success','checked_in'=>'primary','checked_out'=>'info','dibatalkan'=>'secondary'];
+                                    $badge = ['menunggu'=>'warning','dibayar'=>'success','checked_in'=>'primary','checked_out'=>'info','dibatalkan'=>'danger'];
                                     $label = ['menunggu'=>'Menunggu','dibayar'=>'Dibayar','checked_in'=>'Menginap','checked_out'=>'Selesai','dibatalkan'=>'Dibatalkan'];
                                     $status = $p->status ?? 'menunggu';
                                     @endphp
-                                    <span class="badge badge-{{ $badge[$status] ?? 'secondary' }}">
+                                    <span class="badge bg-{{ $badge[$status] ?? 'secondary' }}">
                                         {{ $label[$status] ?? ucfirst($status) }}
                                     </span>
                                 </td>

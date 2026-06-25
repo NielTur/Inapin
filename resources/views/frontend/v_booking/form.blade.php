@@ -2,6 +2,23 @@
 
 @section('title', 'Pesan Villa - ' . $villa->nama_villa)
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Flatpickr: Tanggal yang sudah di-booking (merah/disabled) */
+    .flatpickr-day.booked-date {
+        background: #fee2e2 !important;
+        color: #dc3545 !important;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .flatpickr-day.booked-date:hover {
+        background: #fca5a5 !important;
+        color: #dc3545 !important;
+    }
+</style>
+@endpush
+
 @section('content')
 
 {{-- Hidden input untuk JS — WAJIB di sini, bukan di @push('scripts') --}}
@@ -77,22 +94,20 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Check-in</label>
-                                <input type="date" name="tanggal_checkin"
+                                <input type="text" name="tanggal_checkin"
                                     class="form-control @error('tanggal_checkin') is-invalid @enderror"
                                     value="{{ old('tanggal_checkin', $checkin) }}"
-                                    min="{{ date('Y-m-d') }}"
-                                    id="inputCheckin" required>
+                                    id="inputCheckin" placeholder="Pilih tanggal" required readonly>
                                 @error('tanggal_checkin')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Check-out</label>
-                                <input type="date" name="tanggal_checkout"
+                                <input type="text" name="tanggal_checkout"
                                     class="form-control @error('tanggal_checkout') is-invalid @enderror"
                                     value="{{ old('tanggal_checkout', $checkout) }}"
-                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                    id="inputCheckout" required>
+                                    id="inputCheckout" placeholder="Pilih tanggal" required readonly>
                                 @error('tanggal_checkout')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -158,8 +173,11 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
 <script>
     var hargaPerMalam = parseInt(document.getElementById('hargaPerMalam').value);
+    var bookedDates = @json($bookedDates ?? []);
 
     function hitungUlang() {
         var checkin = document.getElementById('inputCheckin').value;
@@ -177,8 +195,49 @@
         }
     }
 
-    document.getElementById('inputCheckin').addEventListener('change', hitungUlang);
-    document.getElementById('inputCheckout').addEventListener('change', hitungUlang);
+    // Flatpickr: Check-in
+    var fpCheckoutForm = null;
+    var fpCheckinForm = flatpickr('#inputCheckin', {
+        locale: 'id',
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        defaultDate: '{{ old("tanggal_checkin", $checkin) }}',
+        disable: bookedDates,
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+            if (bookedDates.indexOf(dateStr) !== -1) {
+                dayElem.classList.add('booked-date');
+                dayElem.title = 'Sudah dipesan';
+            }
+        },
+        onChange: function(selectedDates) {
+            if (selectedDates.length > 0) {
+                var nextDay = new Date(selectedDates[0]);
+                nextDay.setDate(nextDay.getDate() + 1);
+                fpCheckoutForm.set('minDate', nextDay);
+            }
+            hitungUlang();
+        }
+    });
+
+    // Flatpickr: Check-out
+    fpCheckoutForm = flatpickr('#inputCheckout', {
+        locale: 'id',
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        defaultDate: '{{ old("tanggal_checkout", $checkout) }}',
+        disable: bookedDates,
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            var dateStr = dayElem.dateObj.toISOString().split('T')[0];
+            if (bookedDates.indexOf(dateStr) !== -1) {
+                dayElem.classList.add('booked-date');
+                dayElem.title = 'Sudah dipesan';
+            }
+        },
+        onChange: function() {
+            hitungUlang();
+        }
+    });
 
     function togglePemesananData() {
         var isChecked = document.getElementById('pesanUntukSaya').checked;
@@ -207,4 +266,4 @@
         }
     }
 </script>
-@endpush
+@endpush

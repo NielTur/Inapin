@@ -18,7 +18,6 @@ class BookingController extends Controller
     {
         $villa = Villa::where('id_villa', $id)
             ->where('status', 'disetujui')
-            ->where('tersedia', true)
             ->with(['fasilitasVilla', 'dokumenVilla'])
             ->firstOrFail();
 
@@ -29,7 +28,9 @@ class BookingController extends Controller
         $malam = max(1, (int) ((strtotime($checkout) - strtotime($checkin)) / 86400));
         $total = $malam * $villa->harga;
 
-        return view('frontend.v_booking.form', compact('villa', 'checkin', 'checkout', 'tamu', 'malam', 'total'));
+        $bookedDates = $villa->getBookedDates();
+
+        return view('frontend.v_booking.form', compact('villa', 'checkin', 'checkout', 'tamu', 'malam', 'total', 'bookedDates'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,8 +40,7 @@ class BookingController extends Controller
                 'id_villa' => [
                     'required',
                     Rule::exists('villa', 'id_villa')
-                        ->where('status', 'disetujui')
-                        ->where('tersedia', true),
+                        ->where('status', 'disetujui'),
                 ],
                 'tanggal_checkin'  => 'required|date|after_or_equal:today',
                 'tanggal_checkout' => 'required|date|after:tanggal_checkin',
@@ -58,8 +58,12 @@ class BookingController extends Controller
 
         $villa = Villa::where('id_villa', $request->id_villa)
             ->where('status', 'disetujui')
-            ->where('tersedia', true)
             ->firstOrFail();
+
+        // Cek overlap tanggal dengan pemesanan aktif
+        if ($villa->isBookedBetween($request->tanggal_checkin, $request->tanggal_checkout)) {
+            return back()->withErrors(['tanggal_checkin' => 'Villa sudah dipesan pada tanggal yang dipilih. Silakan pilih tanggal lain.'])->withInput();
+        }
 
         $malam = (int) ((strtotime($request->tanggal_checkout) - strtotime($request->tanggal_checkin)) / 86400);
         $total = $malam * $villa->harga;
@@ -74,8 +78,6 @@ class BookingController extends Controller
             'tanggal_pemesanan' => now(),
             'expires_at'        => now()->addMinutes(config('app.booking_payment_timeout', 30)),
         ]);
-
-        $villa->update(['tersedia' => false]);
 
         DetailPemesanan::create([
             'id_pemesanan'    => $pemesanan->id_pemesanan,
@@ -103,7 +105,6 @@ class BookingController extends Controller
         // Cek expired
         if ($pemesanan->expires_at && $pemesanan->expires_at->isPast()) {
             $pemesanan->update(['status' => 'dibatalkan']);
-            $pemesanan->villa->update(['tersedia' => true]);
             return redirect()->route('booking.riwayat')
                 ->with('error', 'Waktu pembayaran habis. Pemesanan otomatis dibatalkan.');
         }
@@ -174,7 +175,6 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $pemesanan->update(['status' => 'dibatalkan']);
-        $pemesanan->villa->update(['tersedia' => true]);
 
         return redirect()->route('booking.riwayat')
             ->with('success', 'Pemesanan berhasil dibatalkan.');

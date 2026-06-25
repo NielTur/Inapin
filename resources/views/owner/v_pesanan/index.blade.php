@@ -65,7 +65,7 @@
                 'dibayar' => 'bg-success',
                 'checked_in' => 'bg-primary',
                 'checked_out' => 'bg-info',
-                'dibatalkan' => 'bg-secondary',
+                'dibatalkan' => 'bg-danger',
                 ];
                 $labelMap = [
                 'menunggu' => 'Menunggu Bayar',

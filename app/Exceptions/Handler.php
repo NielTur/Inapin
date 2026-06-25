@@ -35,7 +35,7 @@ class Handler extends ExceptionHandler
                     'password_lama',
                     '_token',
                 ]))
-                ->with('error', 'Sesi Anda sudah berakhir karena terlalu lama tidak aktif. Halaman sudah diperbarui, silakan coba lagi.');
+                ->with('error', 'Sesi Anda sudah berakhir, silakan coba lagi.');
         }
 
         return parent::render($request, $e);
